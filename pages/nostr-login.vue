@@ -46,7 +46,12 @@ async function signInWithNostr() {
       created_at: Math.floor(Date.now() / 1000),
       tags: [
         ['challenge', challenge],
-        ['domain', window.location.hostname],
+        // Must match the server's `Host` header byte-for-byte (see
+        // nostrhost_auth's verify_challenge_response, which does an exact
+        // string compare) — that's `location.host` (host:port), not
+        // `location.hostname` (host only), or this fails on any instance
+        // running on a non-default port.
+        ['domain', window.location.host],
         ['action', 'yunohost-login'],
       ],
       content: '',
