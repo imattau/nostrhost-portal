@@ -65,5 +65,13 @@
         "field_required": "Field value is required",
         "password_not_match": "Passwords don't match.",
         "string_too_short": "Invalid value: must be at least {min} characters"
+    },
+    "nostr": {
+        "login": "Sign in with Nostr",
+        "intro": "Sign in passwordlessly by proving control of your Nostr key with a browser extension (NIP-07).",
+        "sign_in": "Sign in with Nostr",
+        "extension_missing": "No NIP-07 browser extension detected (e.g. Alby or nos2x). Install one and reload this page.",
+        "login_failed": "Sign in failed: the challenge could not be verified for this account.",
+        "back_to_login": "Back to regular login"
     }
 }
