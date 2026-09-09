@@ -109,5 +109,9 @@ const login = handleSubmit(async (form) => {
 
       <YButton :text="t('login')" type="submit" block />
     </form>
+
+    <p class="mt-4 text-center">
+      <NuxtLink class="link" to="/nostr-login">{{ t('nostr.sign_in') }}</NuxtLink>
+    </p>
   </main>
 </template>

@@ -38,23 +38,23 @@ function onAdd() {
       class="mb-3"
       sr-hide-label
     >
-      <div class="join w-full">
+      <div class="flex w-full gap-2">
         <TextInput
           :name="`${name}[${idx}]`"
           :type="type"
           :placeholder="placeholder"
           :disabled="disabled"
-          class="join-item w-full"
+          class="w-full"
         />
         <YButton
+          v-if="!disabled"
           variant="error"
           icon="delete-forever"
           icon-size="2em"
           icon-only
           :text="$t('remove')"
-          class="join-item px-3"
+          class="shrink-0 px-3"
           @click="remove(idx)"
-          v-if="!disabled"
         />
       </div>
     </FormField>

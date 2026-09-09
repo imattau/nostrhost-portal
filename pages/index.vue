@@ -65,7 +65,7 @@ const tileClasses = computed(() => {
     <CustomText v-if="intro" :content="intro" />
 
     <form v-if="settings.search_engine" class="flex my-16" @submit.prevent>
-      <div class="join w-full max-w-xl mx-auto">
+      <div class="mx-auto flex w-full max-w-xl">
         <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
         <label for="search" class="sr-only">
           {{
@@ -78,7 +78,7 @@ const tileClasses = computed(() => {
           id="search"
           v-model="search"
           type="search"
-          class="input input-bordered join-item w-full"
+          class="w-full rounded-l-md border border-r-0 border-gray-300 bg-white px-3 py-2 text-sm focus:z-10 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
           name="search"
           :placeholder="
             t('search_engine_placeholder', {
@@ -88,7 +88,7 @@ const tileClasses = computed(() => {
         />
         <button
           type="submit"
-          class="btn btn-primary join-item px-2"
+          class="flex shrink-0 items-center rounded-r-md bg-brand-600 px-3 text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
           @click="onSearchSubmit"
         >
           <YIcon name="magnify" aria-hidden="true" class="m-0" />
@@ -112,7 +112,7 @@ const tileClasses = computed(() => {
         <li
           v-for="app in apps"
           :key="app.label"
-          class="app-tile flex text-align flex-auto btn btn-dark !h-auto p-5 relative flex-nowrap items-start justify-normal text-left font-normal"
+          class="app-tile text-align relative flex flex-auto flex-nowrap items-start justify-normal rounded-lg p-5 text-left font-normal transition-colors"
           :class="tileClasses.tile"
           :style="`--label-hash: ${app.label_hash}`"
         >

@@ -1,20 +1,21 @@
+const plugin = require('tailwindcss/plugin')
+
 module.exports = {
-  // Safelisting some classes to avoid content purge
-  plugins: [require('daisyui')],
-  safelist: [
-    'safelisted',
-    'bg-primary',
-    'bg-secondary',
-    'bg-accent',
-    'bg-neutral',
-    'bg-base-100',
-    'bg-base-200',
-    'bg-base-300',
-    'bg-base-content',
-    'bg-info',
-    'bg-success',
-    'bg-warning',
-    'bg-error',
+  plugins: [
+    // A `.link` component class, usable via both a template class and
+    // `@apply link` (see components/CustomText.vue) — replaces DaisyUI's
+    // `.link` now that DaisyUI is gone.
+    plugin(({ addComponents, theme }) => {
+      addComponents({
+        '.link': {
+          color: theme('colors.brand.600'),
+          '&:hover': { textDecorationLine: 'underline' },
+        },
+        '.dark .link': {
+          color: theme('colors.brand.400'),
+        },
+      })
+    }),
   ],
   theme: {
     screens: {
@@ -24,94 +25,23 @@ module.exports = {
       xl: '1240px',
       '2xl': '1436px',
     },
-  },
-  daisyui: {
-    themes: [
-      {
-        legacy: {
-          primary: '#2980b9',
-          secondary: '#30333b',
-          accent: '#7028b8',
-          neutral: '#999',
-          info: '#2980b9',
-          success: '#27ae60',
-          warning: '#e67e22',
-          error: '#c0392b',
-          'base-100': '#41444f',
-          'base-200': '#999',
-          'base-300': '#30333b',
-          'base-content': '#fff',
-          'primary-content': '#fff',
-          'secondary-content': '#fff',
-          'accent-content': '#fff',
-          'neutral-content': '#fff',
-          'info-content': '#fff',
-          'success-content': '#fff',
-          'warning-content': '#fff',
-          'error-content': '#fff',
-          '--rounded-box': '0rem',
-          '--rounded-btn': '0rem',
-        },
-        dark: {
-          primary: '#53a5fb',
-          secondary: '#20cb98',
-          accent: '#b957ea',
-          neutral: '#EDEDED',
-          info: '#79e7f9',
-          success: '#70ea8d',
-          warning: '#ffd452',
-          error: '#ff5a5a',
-          'base-100': '#202020',
-          'base-200': '#3C3C3C',
-          'base-300': '#303030',
-          'base-content': '#fafafa',
-          'primary-content': '#000',
-          'secondary-content': '#000',
-          'accent-content': '#000',
-          'neutral-content': '#000',
-          'info-content': '#000',
-          'success-content': '#000',
-          'warning-content': '#000',
-          'error-content': '#000',
-          '--rounded-box': '0.1875rem',
-          '--rounded-btn': '0.1875rem',
-          '--border-btn': '1px',
-        },
-        omg: {
-          primary: '#ffe066',
-          secondary: '#eebefa',
-          accent: '#bac8ff',
-          neutral: '#e7ebf3',
-          info: '#a5d8ff',
-          success: '#63e6be',
-          warning: '#ff922b',
-          error: '#fcc2d7',
-          'base-100': '#343a40',
-          'base-200': '#6f7479',
-          'base-300': '#212529',
-          'base-content': '#f1f3f5',
-          '--rounded-box': '.13rem',
-          '--rounded-btn': '.3rem',
-          '--rounded-badge': '1.9rem',
-          '--animation-btn': '0.25s',
-          '--animation-input': '0.2s',
-          '--btn-focus-scale': '0.95',
-          '--border-btn': '1px',
-          '--tab-border': '1px',
-          '--tab-radius': '0.5rem',
+    extend: {
+      colors: {
+        // Shared with the admin UI redesign (forks/admin) so both surfaces
+        // read as one product.
+        brand: {
+          50: '#eef6ff',
+          100: '#dbebff',
+          200: '#b8d6ff',
+          300: '#85b8ff',
+          400: '#4a8cff',
+          500: '#1a67f0',
+          600: '#0d4fc7',
+          700: '#0c3fa0',
+          800: '#103682',
+          900: '#12306c',
         },
       },
-      'light',
-      // dark
-      'black', // to rework contrasts
-      'synthwave',
-      'halloween',
-      'coffee',
-      // light
-      'cupcake',
-      'cyberpunk',
-      'valentine',
-      'nord',
-    ],
+    },
   },
 }

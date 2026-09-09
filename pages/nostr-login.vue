@@ -88,7 +88,7 @@ async function signInWithNostr() {
       assertive
     />
 
-    <p class="mb-4 text-center text-base-content/70">
+    <p class="mb-4 text-center text-slate-600 dark:text-slate-400">
       {{ t('nostr.intro') }}
     </p>
 

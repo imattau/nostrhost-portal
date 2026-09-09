@@ -132,7 +132,7 @@ async function logout() {
             :key="link.to"
             :to="link.to"
             :target="link.newWindow ? '_blank' : undefined"
-            class="link link-hover text-base-content inline-block"
+            class="link inline-block"
           >
             {{ link.text }}
           </NuxtLink>

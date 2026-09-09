@@ -8,6 +8,9 @@ dist
 # Node dependencies
 node_modules
 
+# yarn (nodeLinker: node-modules) local cache/state, not the lockfile
+.yarn/
+
 # Logs
 logs
 *.log

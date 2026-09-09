@@ -77,7 +77,7 @@ provide(formGroupExtras, {
           tabindex="-1"
           aria-live="assertive"
           aria-atomic="true"
-          class="text-error mt-1"
+          class="mt-1 text-red-600 dark:text-red-400"
         >
           {{ error }}
         </div>
