@@ -21,7 +21,6 @@
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@types/node": "^22.6.1",
     "@typescript-eslint/parser": "^8.7.0",
-    "daisyui": "^4.12.10",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -33,7 +32,10 @@
   },
   "dependencies": {
     "@vee-validate/yup": "^4.13.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "nuxt-icons": "^3.2.1",
+    "tailwind-merge": "^3.6.0",
     "vee-validate": "^4.13.2"
   }
 }

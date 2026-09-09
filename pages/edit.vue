@@ -26,26 +26,7 @@ const localesAsOptions = computed(() => {
   return options
 })
 
-const themesAsOptions = [
-  'auto',
-  'system',
-  // Daisyui default themes
-  'light',
-  // Custom dark
-  'dark',
-  'omg',
-  'legacy',
-  // Daisyui dark
-  'black',
-  'synthwave',
-  'halloween',
-  'coffee',
-  // Daisyui light
-  'cupcake',
-  'cyberpunk',
-  'valentine',
-  'nord',
-].map((theme) => ({
+const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
   text:
     theme !== 'auto'
       ? theme.charAt(0).toUpperCase() + theme.slice(1)
@@ -60,17 +41,19 @@ const themesAsOptions = [
 
     <div class="lg:flex lg:justify-between">
       <section
-        class="lg:w-1/2 lg:me-20 h-full card card-bordered border-base-300 my-10"
+        class="my-10 h-full rounded-lg border border-gray-200 dark:border-gray-700 lg:me-20 lg:w-1/2"
       >
-        <div class="card-header bg-base-300 py-4 px-8">
+        <div class="rounded-t-lg bg-gray-100 px-8 py-4 dark:bg-gray-800">
           <h2 class="text-3xl">{{ t('edit_personal_settings') }}</h2>
         </div>
 
         <UserInfoForm class="p-8" />
       </section>
 
-      <section class="lg:w-1/2 card card-bordered border-base-300 my-10">
-        <div class="card-header bg-base-300 py-4 px-8">
+      <section
+        class="my-10 rounded-lg border border-gray-200 dark:border-gray-700 lg:w-1/2"
+      >
+        <div class="rounded-t-lg bg-gray-100 px-8 py-4 dark:bg-gray-800">
           <h2 class="text-3xl">{{ $t('change_password') }}</h2>
         </div>
 
@@ -78,19 +61,19 @@ const themesAsOptions = [
       </section>
     </div>
 
-    <section class="card card-bordered border-base-300 my-10">
-      <div class="card-header bg-base-300 py-4 px-8">
+    <section class="my-10 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div class="rounded-t-lg bg-gray-100 px-8 py-4 dark:bg-gray-800">
         <h2 class="text-3xl">{{ t('edit_browser_settings') }}</h2>
       </div>
 
       <form class="p-8" novalidate @submit.prevent>
-        <div role="group" class="flex flex-wrap align mb-3">
+        <div role="group" class="align mb-3 flex flex-wrap items-center">
           <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
-          <label for="language" class="label me-3">{{ t('language') }}</label>
+          <label for="language" class="me-3">{{ t('language') }}</label>
           <select
             id="language"
             v-model="preferedLocale"
-            class="select select-bordered"
+            class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
           >
             <option disabled selected>{{ t('language') }}</option>
             <option
@@ -103,13 +86,13 @@ const themesAsOptions = [
           </select>
         </div>
 
-        <div role="group" class="flex flex-wrap align">
+        <div role="group" class="align flex flex-wrap items-center">
           <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
-          <label for="theme" class="label me-3">{{ t('theme') }}</label>
+          <label for="theme" class="me-3">{{ t('theme') }}</label>
           <select
             id="theme"
             v-model="preferedTheme"
-            class="select select-bordered"
+            class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
           >
             <option disabled selected>{{ t('theme') }}</option>
             <option
@@ -125,10 +108,3 @@ const themesAsOptions = [
     </section>
   </div>
 </template>
-
-<style scoped>
-.card .card-header {
-  border-top-left-radius: var(--rounded-box);
-  border-top-right-radius: var(--rounded-box);
-}
-</style>
