@@ -4,8 +4,8 @@ const useApiEndpoint = () => {
   return (
     'https://' +
     (process.dev
-      ? useRuntimeConfig().public.apiIp || window.location.hostname
-      : window.location.hostname) +
+      ? useRuntimeConfig().public.apiIp || window.location.host
+      : window.location.host) +
     '/yunohost/portalapi'
   )
 }

@@ -35,7 +35,7 @@ type NostrWindow = Window & {
 async function signInWithSigner(signer: NostrSigner) {
   // Build an absolute portalapi URL: the app's Nuxt baseURL is /yunohost/sso,
   // so a relative $fetch would be double-prefixed (…/sso/yunohost/portalapi/…).
-  const api = `https://${window.location.hostname}/yunohost/portalapi`
+  const api = `https://${window.location.host}/yunohost/portalapi`
   const { challenge } = await $fetch<{ challenge: string }>(
     `${api}/nostr/challenge`,
     { credentials: 'include' },
