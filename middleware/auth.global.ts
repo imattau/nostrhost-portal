@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const redirectUrl = useRedirectUrl()
   if (to.query.r) {
     redirectUrl.value = to.query.r as string
-    if (to.name !== 'login') {
+    if (to.name !== 'login' && to.name !== 'nostr-login') {
       return navigateTo({ path: '/login', query: { r: to.query.r } })
     }
   } else {
@@ -26,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     queryMsg.value = null
   }
 
-  if (to.name === 'login') {
+  if (to.name === 'login' || to.name === 'nostr-login') {
     if (isLoggedIn.value) {
       return navigateTo('/')
     }

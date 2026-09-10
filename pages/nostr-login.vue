@@ -33,8 +33,11 @@ type NostrWindow = Window & {
 }
 
 async function signInWithSigner(signer: NostrSigner) {
+  // Build an absolute portalapi URL: the app's Nuxt baseURL is /yunohost/sso,
+  // so a relative $fetch would be double-prefixed (…/sso/yunohost/portalapi/…).
+  const api = `https://${window.location.hostname}/yunohost/portalapi`
   const { challenge } = await $fetch<{ challenge: string }>(
-    '/yunohost/portalapi/nostr/challenge',
+    `${api}/nostr/challenge`,
     { credentials: 'include' },
   )
   const signed = await signer.signEvent({
@@ -47,7 +50,7 @@ async function signInWithSigner(signer: NostrSigner) {
     ],
     content: '',
   })
-  await $fetch('/yunohost/portalapi/nostr/login', {
+  await $fetch(`${api}/nostr/login`, {
     method: 'POST',
     credentials: 'include',
     body: { event: signed },
@@ -110,8 +113,20 @@ async function signInWithPasskey() {
 }
 
 onMounted(() => {
-  const passkey = (window as NostrWindow).NostrPasskey
-  passkeyAvailable.value = !!passkey?.hasStoredPasskeyIdentity()
+  // The passkey vendor is injected as a deferred script, which may not
+  // have executed by the time this component mounts. Poll briefly so a
+  // stored passkey identity surfaces the "Use passkey" button even when
+  // the script tag resolves late.
+  let attempts = 0
+  const check = () => {
+    const passkey = (window as NostrWindow).NostrPasskey
+    if (passkey) {
+      passkeyAvailable.value = !!passkey.hasStoredPasskeyIdentity()
+    } else if (attempts++ < 50) {
+      setTimeout(check, 100)
+    }
+  }
+  check()
 })
 </script>
 
