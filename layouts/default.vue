@@ -9,6 +9,7 @@ const user = await useUser<User | null>()
 
 const footerLinks = computed(() => [
   { text: t('footerlink_edit'), to: '/edit' },
+  { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
   {
     text: t('footerlink_documentation'),
     to: '//doc.yunohost.org/',
