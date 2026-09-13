@@ -13,16 +13,26 @@ const portalTitle = computed(() =>
 const user = await useUser<User | null>()
 
 const footerLinks = computed(() => {
-  const links: { text: string; to: string; newWindow?: boolean }[] = [
+  const links: {
+    text: string
+    to: string
+    newWindow?: boolean
+    external?: boolean
+  }[] = [
     { text: t('footerlink_edit'), to: '/edit' },
     { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
   ]
   // The admin console is same-origin and only meaningful for admins; the
   // console itself refuses non-admins, so gate the link on the account flag.
+  // It must be rendered as an external link: with the Nuxt app baseURL set to
+  // /nostrhost/sso, an app-relative to="/nostrhost/admin/" would be
+  // double-prefixed into /nostrhost/sso/nostrhost/admin/ and land on the
+  // portal's 404 page instead of the console.
   if (user.value?.admin) {
     links.push({
       text: t('footerlink_administration'),
       to: '/nostrhost/admin/',
+      external: true,
     })
   }
   return links
@@ -144,6 +154,7 @@ async function logout() {
             v-for="link in footerLinks"
             :key="link.to"
             :to="link.to"
+            :external="link.external"
             :target="link.newWindow ? '_blank' : undefined"
             class="link inline-block"
           >
