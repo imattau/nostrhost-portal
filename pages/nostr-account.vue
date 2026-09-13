@@ -484,11 +484,13 @@ onMounted(async () => {
             <div v-if="identity.enabled" class="flex gap-2">
               <YButton
                 icon="pencil"
+                variant="secondary"
                 :text="t('nostr_account.rename')"
                 @click.prevent="rename(identity)"
               />
               <YButton
-                icon="close"
+                icon="delete-forever"
+                variant="error"
                 :text="t('nostr_account.revoke')"
                 @click.prevent="revoke(identity)"
               />
@@ -515,7 +517,10 @@ onMounted(async () => {
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.link_section') }}
         </h2>
-        <div class="mb-4 flex flex-wrap items-center gap-4">
+
+        <div
+          class="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-portal-border bg-portal-elevated p-3"
+        >
           <label
             for="link-mode-replace"
             class="flex items-center gap-2 text-sm"
@@ -548,145 +553,195 @@ onMounted(async () => {
             :placeholder="t('nostr_account.label_placeholder')"
             autocomplete="off"
           />
+          <p class="w-full text-xs text-portal-muted sm:w-auto sm:ms-auto">
+            {{ t('nostr_account.link_options_hint') }}
+          </p>
         </div>
 
-        <div class="space-y-2">
-          <YButton
-            icon="login"
-            :text="t('nostr_account.link_nip07')"
-            block
-            :disabled="busy"
-            @click.prevent="linkWithNip07"
-          />
-
-          <div class="flex gap-2">
-            <input
-              v-model="bunkerInput"
-              aria-label="Remote signer address"
-              class="portal-account-input min-w-0 flex-1"
-              :placeholder="t('nostr_account.bunker_placeholder')"
-              autocomplete="off"
-            />
-            <YButton
-              :text="t('nostr_account.bunker_connect')"
-              :disabled="busy || !bunkerInput.trim()"
-              @click.prevent="linkWithBunker"
-            />
-            <YButton
-              :text="t('nostr_account.qr_show')"
-              :disabled="busy"
-              @click.prevent="linkWithQr"
-            />
-          </div>
-
+        <!-- One card per sign-in method, ordered simplest to most involved:
+             an already-installed extension, then a remote/bunker signer,
+             then key material this device holds (generated or passkey). -->
+        <div class="space-y-4">
           <div
-            v-if="qrOpen"
-            class="flex flex-col items-center gap-2 rounded-xl border border-portal-border bg-portal-elevated p-4"
-          >
-            <img v-if="qrDataUrl" :src="qrDataUrl" class="h-52 w-52" alt="" />
-            <p class="break-all text-xs opacity-60">{{ qrUri }}</p>
-            <YButton
-              :text="t('nostr_account.qr_cancel')"
-              @click.prevent="cancelQr"
-            />
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <YButton
-              :text="t('nostr_account.generate')"
-              :disabled="busy"
-              @click.prevent="generateLocalKey"
-            />
-            <YButton
-              v-if="hasPasskey"
-              :text="t('nostr_account.passkey_use')"
-              :disabled="busy"
-              @click.prevent="usePasskey"
-            />
-            <YButton
-              v-else
-              :text="
-                generated
-                  ? t('nostr_account.passkey_protect')
-                  : t('nostr_account.passkey_create')
-              "
-              :disabled="busy"
-              @click.prevent="usePasskey"
-            />
-            <YButton
-              v-if="hasPasskey"
-              :text="t('nostr_account.passkey_recovery')"
-              :disabled="busy"
-              @click.prevent="revealRecovery"
-            />
-            <YButton
-              v-if="hasPasskey"
-              :text="t('nostr_account.passkey_forget')"
-              :disabled="busy"
-              @click.prevent="forgetPasskey"
-            />
-          </div>
-
-          <div v-if="recoveryNsec" class="space-y-2">
-            <p class="break-all font-mono text-xs">{{ recoveryNsec }}</p>
-            <YButton
-              :text="t('nostr_account.recovery_copy')"
-              @click.prevent="copyRecovery"
-            />
-          </div>
-
-          <div v-if="!hasPasskey" class="flex gap-2">
-            <input
-              v-model="restoreNsec"
-              aria-label="Recovery key"
-              class="portal-account-input min-w-0 flex-1"
-              :placeholder="t('nostr_account.recovery_restore_placeholder')"
-              autocomplete="off"
-            />
-            <YButton
-              :text="t('nostr_account.recovery_restore')"
-              :disabled="busy || !restoreNsec.trim()"
-              @click.prevent="restorePasskey"
-            />
-          </div>
-
-          <div
-            v-if="generated"
             class="rounded-xl border border-portal-border bg-portal-elevated p-4"
           >
-            <p class="break-all font-mono text-sm">{{ generated.npub }}</p>
-            <p class="mt-1 break-all font-mono text-sm">
-              {{ revealNsec ? generated.nsec : '•'.repeat(63) }}
+            <h3 class="font-semibold">
+              {{ t('nostr_account.method_extension_title') }}
+            </h3>
+            <p class="mb-3 mt-1 text-sm text-portal-muted">
+              {{ t('nostr_account.method_extension_desc') }}
             </p>
-            <div class="mt-2 flex flex-wrap items-center gap-3">
-              <YButton
-                :text="
-                  revealNsec
-                    ? t('nostr_account.hide_nsec')
-                    : t('nostr_account.reveal_nsec')
-                "
-                @click.prevent="revealNsec = !revealNsec"
+            <YButton
+              icon="login"
+              :text="t('nostr_account.link_nip07')"
+              block
+              :disabled="busy"
+              @click.prevent="linkWithNip07"
+            />
+          </div>
+
+          <div
+            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
+          >
+            <h3 class="font-semibold">
+              {{ t('nostr_account.method_remote_title') }}
+            </h3>
+            <p class="mb-3 mt-1 text-sm text-portal-muted">
+              {{ t('nostr_account.method_remote_desc') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <input
+                v-model="bunkerInput"
+                aria-label="Remote signer address"
+                class="portal-account-input min-w-0 flex-1"
+                :placeholder="t('nostr_account.bunker_placeholder')"
+                autocomplete="off"
               />
               <YButton
-                :text="t('nostr_account.copy_nsec')"
-                @click.prevent="navigator.clipboard.writeText(generated.nsec)"
+                :text="t('nostr_account.bunker_connect')"
+                :disabled="busy || !bunkerInput.trim()"
+                @click.prevent="linkWithBunker"
               />
-              <label
-                for="remember-generated-key"
-                class="flex items-center gap-2 text-sm"
-              >
-                <input
-                  id="remember-generated-key"
-                  v-model="rememberKey"
-                  class="accent-brand-500"
-                  type="checkbox"
-                />
-                {{ t('nostr_account.remember_key') }}
-              </label>
               <YButton
-                :text="t('nostr_account.use_generated')"
+                variant="secondary"
+                :text="t('nostr_account.qr_show')"
                 :disabled="busy"
-                @click.prevent="useGeneratedKey"
+                @click.prevent="linkWithQr"
+              />
+            </div>
+
+            <div
+              v-if="qrOpen"
+              class="mt-3 flex flex-col items-center gap-2 rounded-xl border border-portal-border bg-portal-surface p-4"
+            >
+              <img v-if="qrDataUrl" :src="qrDataUrl" class="h-52 w-52" alt="" />
+              <p class="break-all text-xs opacity-60">{{ qrUri }}</p>
+              <YButton
+                variant="secondary"
+                :text="t('nostr_account.qr_cancel')"
+                @click.prevent="cancelQr"
+              />
+            </div>
+          </div>
+
+          <div
+            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
+          >
+            <h3 class="font-semibold">
+              {{ t('nostr_account.method_key_title') }}
+            </h3>
+            <p class="mb-3 mt-1 text-sm text-portal-muted">
+              {{ t('nostr_account.method_key_desc') }}
+            </p>
+
+            <div class="flex flex-wrap gap-2">
+              <YButton
+                :text="t('nostr_account.generate')"
+                :disabled="busy"
+                @click.prevent="generateLocalKey"
+              />
+              <YButton
+                v-if="hasPasskey"
+                :text="t('nostr_account.passkey_use')"
+                :disabled="busy"
+                @click.prevent="usePasskey"
+              />
+              <YButton
+                v-else
+                :text="
+                  generated
+                    ? t('nostr_account.passkey_protect')
+                    : t('nostr_account.passkey_create')
+                "
+                :disabled="busy"
+                @click.prevent="usePasskey"
+              />
+              <YButton
+                v-if="hasPasskey"
+                variant="secondary"
+                :text="t('nostr_account.passkey_recovery')"
+                :disabled="busy"
+                @click.prevent="revealRecovery"
+              />
+              <YButton
+                v-if="hasPasskey"
+                variant="secondary"
+                :text="t('nostr_account.passkey_forget')"
+                :disabled="busy"
+                @click.prevent="forgetPasskey"
+              />
+            </div>
+
+            <div
+              v-if="recoveryNsec"
+              class="mt-3 space-y-2 rounded-xl border border-portal-border bg-portal-surface p-4"
+            >
+              <p class="break-all font-mono text-xs">{{ recoveryNsec }}</p>
+              <YButton
+                variant="secondary"
+                :text="t('nostr_account.recovery_copy')"
+                @click.prevent="copyRecovery"
+              />
+            </div>
+
+            <div
+              v-if="generated"
+              class="mt-3 rounded-xl border border-portal-border bg-portal-surface p-4"
+            >
+              <p class="break-all font-mono text-sm">
+                {{ generated.npub }}
+              </p>
+              <p class="mt-1 break-all font-mono text-sm">
+                {{ revealNsec ? generated.nsec : '•'.repeat(63) }}
+              </p>
+              <div class="mt-2 flex flex-wrap items-center gap-3">
+                <YButton
+                  variant="secondary"
+                  :text="
+                    revealNsec
+                      ? t('nostr_account.hide_nsec')
+                      : t('nostr_account.reveal_nsec')
+                  "
+                  @click.prevent="revealNsec = !revealNsec"
+                />
+                <YButton
+                  variant="secondary"
+                  :text="t('nostr_account.copy_nsec')"
+                  @click.prevent="navigator.clipboard.writeText(generated.nsec)"
+                />
+                <label
+                  for="remember-generated-key"
+                  class="flex items-center gap-2 text-sm"
+                >
+                  <input
+                    id="remember-generated-key"
+                    v-model="rememberKey"
+                    class="accent-brand-500"
+                    type="checkbox"
+                  />
+                  {{ t('nostr_account.remember_key') }}
+                </label>
+                <YButton
+                  :text="t('nostr_account.use_generated')"
+                  :disabled="busy"
+                  @click.prevent="useGeneratedKey"
+                />
+              </div>
+            </div>
+
+            <div v-if="!hasPasskey" class="mt-3 flex flex-wrap gap-2">
+              <input
+                v-model="restoreNsec"
+                aria-label="Recovery key"
+                class="portal-account-input min-w-0 flex-1"
+                :placeholder="t('nostr_account.recovery_restore_placeholder')"
+                autocomplete="off"
+              />
+              <YButton
+                variant="secondary"
+                :text="t('nostr_account.recovery_restore')"
+                :disabled="busy || !restoreNsec.trim()"
+                @click.prevent="restorePasskey"
               />
             </div>
           </div>
@@ -716,6 +771,7 @@ onMounted(async () => {
             <span class="font-mono">{{ savedSigners.relays.join(', ') }}</span>
           </span>
           <YButton
+            variant="secondary"
             :text="t('nostr_account.forget')"
             @click.prevent="forgetBunker"
           />
@@ -726,6 +782,7 @@ onMounted(async () => {
         >
           <span class="text-sm">{{ t('nostr_account.saved_local') }}</span>
           <YButton
+            variant="secondary"
             :text="t('nostr_account.forget')"
             @click.prevent="forgetLocalKey"
           />
@@ -734,7 +791,8 @@ onMounted(async () => {
 
       <YButton
         v-if="identities.some((i) => i.enabled)"
-        icon="close"
+        icon="delete-forever"
+        variant="error"
         :text="t('nostr_account.unlink_all')"
         :disabled="busy"
         @click.prevent="unlinkAll"
