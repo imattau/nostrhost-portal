@@ -6,7 +6,7 @@ const isLoggedIn = useIsLoggedIn()
 const queryMsg = useQueryMsg()
 const settings = await useSettings()
 const portalTitle = computed(() =>
-  settings.value.portal_title && !/yunohost/i.test(settings.value.portal_title)
+  settings.value.portal_title && !/nostrhost/i.test(settings.value.portal_title)
     ? settings.value.portal_title
     : 'NostrHost Service Portal',
 )

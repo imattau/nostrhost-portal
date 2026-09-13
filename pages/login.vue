@@ -3,16 +3,16 @@ definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
 const settings = await useSettings()
 const settingsTitle = computed(() =>
-  settings.value.portal_title && !/yunohost/i.test(settings.value.portal_title)
+  settings.value.portal_title && !/nostrhost/i.test(settings.value.portal_title)
     ? settings.value.portal_title
     : 'NostrHost Service Portal',
 )
 useHead({
   title: t('login'),
   script: [
-    { src: '/yunohost/sso/nostr/nostr-connect-vendor.js', defer: true },
-    { src: '/yunohost/sso/nostr/nostr-connect-ui.js', defer: true },
-    { src: '/yunohost/sso/nostr/nostr-passkey-vendor.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-passkey-vendor.js', defer: true },
   ],
 })
 const isLoggedIn = useIsLoggedIn()
@@ -40,9 +40,9 @@ type NostrWindow = Window & {
 }
 
 async function signInWithSigner(signer: NostrSigner) {
-  // Build an absolute portalapi URL: the app's Nuxt baseURL is /yunohost/sso,
-  // so a relative $fetch would be double-prefixed (…/sso/yunohost/portalapi/…).
-  const api = `https://${window.location.host}/yunohost/portalapi`
+  // Build an absolute portalapi URL: the app's Nuxt baseURL is /nostrhost/sso,
+  // so a relative $fetch would be double-prefixed (…/sso/nostrhost/portalapi/…).
+  const api = `https://${window.location.host}/nostrhost/portalapi`
   const { challenge } = await $fetch<{ challenge: string }>(
     `${api}/nostr/challenge`,
     { credentials: 'include' },
@@ -53,7 +53,7 @@ async function signInWithSigner(signer: NostrSigner) {
     tags: [
       ['challenge', challenge],
       ['domain', window.location.host],
-      ['action', 'yunohost-login'],
+      ['action', 'nostrhost-login'],
     ],
     content: '',
   })

@@ -8,13 +8,13 @@ const { t } = useI18n()
 useHead({
   title: t('nostr_account.title'),
   script: [
-    { src: '/yunohost/sso/nostr/nostr-connect-vendor.js', defer: true },
-    { src: '/yunohost/sso/nostr/nostr-connect-ui.js', defer: true },
-    { src: '/yunohost/sso/nostr/nostr-passkey-vendor.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
+    { src: '/nostrhost/sso/nostr/nostr-passkey-vendor.js', defer: true },
   ],
 })
 
-const api = () => `https://${window.location.host}/yunohost/portalapi`
+const api = () => `https://${window.location.host}/nostrhost/portalapi`
 
 type NostrSigner = {
   signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
@@ -154,7 +154,7 @@ async function linkWithSigner(signer: NostrSigner, signerType: string) {
     tags: [
       ['challenge', challenge],
       ['domain', window.location.host],
-      ['action', 'yunohost-link'],
+      ['action', 'nostrhost-link'],
     ],
     content: '',
   })

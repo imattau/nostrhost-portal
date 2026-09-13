@@ -6,11 +6,11 @@ export default defineNuxtConfig({
   ssr: false,
   spaLoadingTemplate: 'spa-loading-template.html',
   app: {
-    baseURL: '/yunohost/sso',
+    baseURL: '/nostrhost/sso',
     buildAssetsDir: '/assets/',
     head: {
       link: [
-        { rel: 'stylesheet', href: '/yunohost/sso/customassets/custom.css' },
+        { rel: 'stylesheet', href: '/nostrhost/sso/customassets/custom.css' },
       ],
     },
   },

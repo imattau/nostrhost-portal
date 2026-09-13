@@ -6,7 +6,7 @@ const useApiEndpoint = () => {
     (process.dev
       ? useRuntimeConfig().public.apiIp || window.location.host
       : window.location.host) +
-    '/yunohost/portalapi'
+    '/nostrhost/portalapi'
   )
 }
 
