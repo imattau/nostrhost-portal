@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const plugin = require('tailwindcss/plugin')
 
 module.exports = {
@@ -30,16 +31,25 @@ module.exports = {
         // Shared with the admin UI redesign (forks/admin) so both surfaces
         // read as one product.
         brand: {
-          50: '#eef6ff',
-          100: '#dbebff',
-          200: '#b8d6ff',
-          300: '#85b8ff',
-          400: '#4a8cff',
-          500: '#1a67f0',
-          600: '#0d4fc7',
-          700: '#0c3fa0',
-          800: '#103682',
-          900: '#12306c',
+          50: '#f5f0ff',
+          100: '#ede5ff',
+          200: '#dacaff',
+          300: '#c4a8ff',
+          400: '#a37bff',
+          500: '#8b5cf6',
+          600: '#7541db',
+          700: '#6134bb',
+          800: '#4d2a91',
+          900: '#2b1c4a',
+        },
+        portal: {
+          background: 'rgb(var(--portal-background) / <alpha-value>)',
+          surface: 'rgb(var(--portal-surface) / <alpha-value>)',
+          elevated: 'rgb(var(--portal-elevated) / <alpha-value>)',
+          input: 'rgb(var(--portal-input) / <alpha-value>)',
+          border: 'rgb(var(--portal-border) / <alpha-value>)',
+          foreground: 'rgb(var(--portal-foreground) / <alpha-value>)',
+          muted: 'rgb(var(--portal-muted) / <alpha-value>)',
         },
       },
     },

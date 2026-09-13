@@ -32,7 +32,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   googleFonts: {
     families: {
-      'Source+Sans+3': [500, 900],
+      Geist: [400, 500, 600, 700, 800],
+      'Geist+Mono': [400, 600, 700],
     },
   },
   runtimeConfig: {

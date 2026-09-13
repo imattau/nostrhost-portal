@@ -1,6 +1,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
+const settings = await useSettings()
+const settingsTitle = computed(() =>
+  settings.value.portal_title && !/yunohost/i.test(settings.value.portal_title)
+    ? settings.value.portal_title
+    : 'NostrHost Service Portal',
+)
 useHead({
   title: t('nostr.login'),
   script: [
@@ -131,56 +137,108 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="w-50 m-auto max-w-[300px]">
-    <CustomLogo class="mx-auto mb-10 flex-none w-1/2" />
-    <BaseAlert
-      v-if="error"
-      variant="error"
-      icon="alert-outline"
-      :message="error"
-      class="mb-4"
-      assertive
+  <main
+    class="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12"
+  >
+    <div
+      aria-hidden="true"
+      class="portal-login-glow pointer-events-none absolute left-1/2 top-1/2 h-[34rem] w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
     />
-    <p class="mb-4 text-center text-slate-600 dark:text-slate-400">
-      {{ t('nostr.intro') }}
-    </p>
-    <YButton
-      icon="login"
-      :text="t('nostr.sign_in')"
-      block
-      :disabled="busy"
-      @click.prevent="signInWithNostr"
-    />
-    <YButton
-      v-if="passkeyAvailable"
-      class="mt-3"
-      icon="lock"
-      text="Use passkey"
-      block
-      :disabled="busy"
-      @click.prevent="signInWithPasskey"
-    />
-    <div class="mt-5">
-      <label class="sr-only" for="nostr-bunker">Remote signer</label>
-      <input
-        id="nostr-bunker"
-        v-model="bunker"
-        class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-        placeholder="bunker:// or NIP-05 signer"
-        autocomplete="off"
+
+    <section
+      class="relative w-full max-w-[460px] rounded-3xl border border-portal-border bg-portal-surface p-6 shadow-2xl sm:p-12"
+    >
+      <div class="mb-8 flex flex-col items-center text-center">
+        <div
+          class="mb-4 grid size-12 place-items-center rounded-xl bg-brand-500/10 text-brand-500"
+        >
+          <YIcon name="shield-check" size="1.5rem" aria-hidden="true" />
+        </div>
+        <span
+          class="mb-4 rounded-full border border-brand-500 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-brand-500"
+        >
+          Private cloud hub
+        </span>
+        <h1
+          class="text-2xl font-extrabold tracking-tight text-portal-foreground"
+        >
+          {{ settingsTitle }}
+        </h1>
+        <p class="mt-2 max-w-xs text-sm leading-6 text-portal-muted">
+          {{ t('nostr.intro') }}
+        </p>
+      </div>
+
+      <BaseAlert
+        v-if="error"
+        variant="error"
+        icon="alert-outline"
+        :message="error"
+        class="mb-5"
+        assertive
       />
-      <YButton
-        class="mt-2"
-        text="Use remote signer"
-        block
-        :disabled="busy || !bunker.trim()"
-        @click.prevent="signInWithBunker"
-      />
-    </div>
-    <p class="mt-4 text-center">
-      <NuxtLink class="link" to="/login">{{
-        t('nostr.back_to_login')
-      }}</NuxtLink>
+
+      <div class="space-y-3">
+        <YButton
+          icon="login"
+          :text="t('nostr.sign_in')"
+          block
+          :disabled="busy"
+          class="min-h-12"
+          @click.prevent="signInWithNostr"
+        />
+        <YButton
+          v-if="passkeyAvailable"
+          icon="lock"
+          text="Use passkey"
+          block
+          variant="secondary"
+          :disabled="busy"
+          @click.prevent="signInWithPasskey"
+        />
+      </div>
+
+      <div class="my-6 flex items-center gap-3 text-xs text-portal-muted">
+        <span class="h-px flex-1 bg-portal-border" />
+        Or connect a remote signer
+        <span class="h-px flex-1 bg-portal-border" />
+      </div>
+
+      <form class="space-y-3" @submit.prevent="signInWithBunker">
+        <input
+          id="nostr-bunker"
+          aria-label="Remote signer address"
+          v-model="bunker"
+          class="w-full rounded-[10px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+          placeholder="bunker:// or NIP-05 signer"
+          autocomplete="off"
+          :disabled="busy"
+        />
+        <YButton
+          type="submit"
+          text="Connect remote signer"
+          variant="secondary"
+          block
+          :disabled="busy || !bunker.trim()"
+        />
+      </form>
+
+      <p class="mt-6 text-center text-sm">
+        <NuxtLink class="link" to="/login">{{
+          t('nostr.back_to_login')
+        }}</NuxtLink>
+      </p>
+    </section>
+
+    <p class="absolute bottom-5 px-5 text-center text-xs text-portal-muted">
+      Sign in with a Nostr identity you control.
     </p>
   </main>
 </template>
+
+<style scoped>
+.portal-login-glow {
+  background: radial-gradient(ellipse, rgb(139 92 246 / 12%), transparent 68%);
+  filter: blur(18px);
+}
+</style>

@@ -5,22 +5,16 @@ const { t } = useI18n()
 const isLoggedIn = useIsLoggedIn()
 const queryMsg = useQueryMsg()
 const settings = await useSettings()
+const portalTitle = computed(() =>
+  settings.value.portal_title && !/yunohost/i.test(settings.value.portal_title)
+    ? settings.value.portal_title
+    : 'NostrHost Service Portal',
+)
 const user = await useUser<User | null>()
 
 const footerLinks = computed(() => [
   { text: t('footerlink_edit'), to: '/edit' },
   { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
-  {
-    text: t('footerlink_documentation'),
-    to: '//doc.yunohost.org/',
-    newWindow: true,
-  },
-  { text: t('footerlink_support'), to: '//doc.yunohost.org/help', newWindow: true },
-  {
-    text: t('footerlink_administration'),
-    to: `//${settings.value.domain}/yunohost/admin/`,
-    newWindow: true,
-  },
 ])
 
 async function logout() {
@@ -38,7 +32,9 @@ async function logout() {
 </script>
 
 <template>
-  <div class="container mx-auto p-6 md:p-10 min-h-screen flex flex-col">
+  <div
+    class="container mx-auto flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8"
+  >
     <BaseAlert
       v-if="queryMsg"
       variant="warning"
@@ -48,7 +44,9 @@ async function logout() {
       assertive
     />
 
-    <header class="py-2">
+    <header
+      class="mb-8 rounded-2xl border border-portal-border bg-portal-surface px-5 py-4 sm:px-6"
+    >
       <div id="focus-reset" class="h-10 -mt-10 focus-target" tabindex="-1">
         <a class="link sr-only focus:not-sr-only" href="#main-target">
           {{ $t('skip_link.main_content') }}
@@ -63,44 +61,47 @@ async function logout() {
       </div>
 
       <slot name="header">
-        <div class="flex flex-row items-center">
-          <NuxtLink to="/" class="me-5">
+        <div class="flex flex-row items-center gap-4">
+          <NuxtLink
+            to="/"
+            class="flex min-w-0 items-center gap-3 text-portal-foreground no-underline"
+          >
             <span class="sr-only">{{ t('back_to_apps') }}</span>
-            <CustomLogo class="logo" />
+            <span
+              class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-500"
+            >
+              <YIcon name="shield-check" size="1.25rem" aria-hidden="true" />
+            </span>
+            <span class="truncate text-base font-bold tracking-tight">{{
+              portalTitle
+            }}</span>
           </NuxtLink>
 
           <div
-            class="flex flex-grow flex-wrap min-[500px]:w-full max-[500px]:flex-col max-[500px]:ms-auto"
+            class="flex flex-grow flex-wrap items-center justify-end gap-3 max-[500px]:flex-col max-[500px]:items-end"
           >
             <div v-if="user" class="flex-grow">
-              <div class="profile flex flex-col">
-                <span>
-                  <span
-                    class="text-2xl font-extrabold tracking-tight leading-none me-2"
-                  >
-                    {{ user.username }}
+              <div class="profile flex flex-col items-end">
+                <span class="flex items-center gap-2">
+                  <span class="text-sm font-bold leading-none">
+                    {{ user.fullname || user.username }}
                   </span>
 
-                  <NuxtLink to="/edit" class="link profile-link">
-                    <YIcon name="pencil" size="1.25em" />
-                    <span class="sr-only">{{ t('footerlink_edit') }}</span>
-                    <span class="text" aria-hidden="true">
-                      {{ t('footerlink_edit') }}
-                    </span>
+                  <NuxtLink
+                    to="/edit"
+                    class="link"
+                    :aria-label="t('footerlink_edit')"
+                  >
+                    <YIcon name="pencil" size="1em" />
                   </NuxtLink>
                 </span>
-                <span class="leading-none">{{ user.fullname }}</span>
-                <span class="opacity-50">{{ user.mail }}</span>
+                <span class="mt-1 text-xs text-portal-muted">{{
+                  user.username
+                }}</span>
               </div>
             </div>
-            <p
-              v-else-if="settings.portal_title"
-              class="text-3xl font-bold flex-grow min-[800px]:text-center mb-3"
-            >
-              {{ settings.portal_title }}
-            </p>
 
-            <div class="max-[500px]:mt-2">
+            <div>
               <YButton
                 v-if="isLoggedIn"
                 icon="logout"
@@ -121,12 +122,12 @@ async function logout() {
     <footer
       v-if="isLoggedIn"
       id="main-footer"
-      class="mt-auto focus-target border-t border-gray-500"
+      class="mt-auto focus-target border-t border-portal-border pt-4"
       tabindex="-1"
     >
       <slot name="footer">
         <nav
-          class="flex pt-2 flex-col flex-wrap text-center sm:space-x-5 sm:flex-row sm:inline-flex"
+          class="flex flex-col flex-wrap gap-4 text-center sm:flex-row sm:text-left"
         >
           <NuxtLink
             v-for="link in footerLinks"
@@ -144,18 +145,6 @@ async function logout() {
 </template>
 
 <style scoped>
-header .logo {
-  width: 100px;
-}
-
-.profile-link .text {
-  display: none;
-}
-.profile-link:hover .text,
-.profile-link:focus .text {
-  display: inline;
-}
-
 .focus-target:not(:focus-visible) {
   outline: none;
 }

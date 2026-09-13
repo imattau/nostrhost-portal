@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import type { User } from '@/composables/states'
-
 definePageMeta({
   public: false,
 })
 
 const { t } = useI18n()
-const user = await useUser<User | null>()
 
 useHead({
   title: t('nostr_account.title'),
@@ -34,12 +31,20 @@ type NostrWindow = Window & {
     getSavedInfo(): { relays: string[]; remoteNpub: string } | null
     reconnectSaved(): Promise<NostrSigner | null>
     connectViaBunkerUri(value: string): Promise<NostrSigner>
-    connectViaQr(onUriReady: (uri: string, dataUrl: string) => void, signal: AbortSignal): Promise<NostrSigner>
+    connectViaQr(
+      onUriReady: (uri: string, dataUrl: string) => void,
+      signal: AbortSignal,
+    ): Promise<NostrSigner>
     clearSaved(): void
     clearLocalKey(): void
     clearAllSaved(): void
     hasLocalKey(): boolean
-    generateLocalKeypair(): { secretKeyHex: string; pubkeyHex: string; nsec: string; npub: string }
+    generateLocalKeypair(): {
+      secretKeyHex: string
+      pubkeyHex: string
+      nsec: string
+      npub: string
+    }
     createLocalSigner(secretKeyHex: string): NostrSigner
     saveLocalKey(secretKeyHex: string): void
   }
@@ -47,8 +52,13 @@ type NostrWindow = Window & {
     hasStoredPasskeyIdentity(): boolean
     unlockPasskeyIdentity(): Promise<{ secretKey: Uint8Array }>
     buildPasskeySignerShim(key: Uint8Array): NostrSigner
-    registerPasskeyIdentity(opts: Record<string, unknown>): Promise<{ secretKey: Uint8Array }>
-    importPasskeyIdentityFromNsec(nsec: string, opts: Record<string, unknown>): Promise<{ secretKey: Uint8Array }>
+    registerPasskeyIdentity(
+      opts: Record<string, unknown>,
+    ): Promise<{ secretKey: Uint8Array }>
+    importPasskeyIdentityFromNsec(
+      nsec: string,
+      opts: Record<string, unknown>,
+    ): Promise<{ secretKey: Uint8Array }>
     exportPasskeyIdentityAsNsec(): Promise<string>
     clearPasskeyIdentity(): void
   }
@@ -79,7 +89,11 @@ const qrOpen = ref(false)
 const qrDataUrl = ref('')
 const qrUri = ref('')
 
-const generated = ref<{ nsec: string; npub: string; secretKeyHex: string } | null>(null)
+const generated = ref<{
+  nsec: string
+  npub: string
+  secretKeyHex: string
+} | null>(null)
 const revealNsec = ref(false)
 const rememberKey = ref(false)
 
@@ -89,21 +103,24 @@ const hasPasskey = ref(false)
 const recoveryNsec = ref('')
 
 const passkeyOpts = () => ({
-  rpName: 'YunoHost Nostr Identity',
+  rpName: 'NostrHost Identity',
   userName: username.value || 'nostr-identity',
-  displayName: 'YunoHost Nostr Identity',
+  displayName: 'NostrHost Identity',
   autoLockTimeout: 300000,
 })
 
 const signerLabel = (type: string) =>
-  ({ nip07: t('nostr_account.signer_nip07'), nip46: t('nostr_account.signer_nip46'), passkey: t('nostr_account.signer_passkey') })[type] ||
-  t('nostr_account.signer_unknown')
+  ({
+    nip07: t('nostr_account.signer_nip07'),
+    nip46: t('nostr_account.signer_nip46'),
+    passkey: t('nostr_account.signer_passkey'),
+  })[type] || t('nostr_account.signer_unknown')
 
 function setStatus(text: string, kind: 'success' | 'error' = 'success') {
   status.value = { text, kind }
 }
 
-async function refreshSaved() {
+function refreshSaved() {
   const ui = (window as NostrWindow).NostrConnectUI
   const pk = (window as NostrWindow).NostrPasskey
   savedSigners.value = ui?.getSavedInfo() ?? null
@@ -122,13 +139,8 @@ async function load() {
   username.value = resp.username
   allowLinking.value = resp.allow_identity_linking
   identities.value = resp.identities
-  await refreshSaved()
+  refreshSaved()
   loading.value = false
-}
-
-function disposeSigner(signer: NostrSigner) {
-  signer?.close?.()
-  signer?.destroy?.()
 }
 
 async function linkWithSigner(signer: NostrSigner, signerType: string) {
@@ -162,7 +174,12 @@ async function linkWithSigner(signer: NostrSigner, signerType: string) {
   await Promise.all([load()])
 }
 
-async function performLink(signEventFn: (ev: Record<string, unknown>) => Promise<Record<string, unknown>>, signerType: string) {
+async function performLink(
+  signEventFn: (
+    ev: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>>,
+  signerType: string,
+) {
   busy.value = true
   status.value = null
   qrOpen.value = false
@@ -181,13 +198,10 @@ async function linkWithNip07() {
     setStatus(t('nostr_account.extension_missing'), 'error')
     return
   }
-  await performLink(
-    async (event) => {
-      event.pubkey = await nostr.getPublicKey()
-      return nostr.signEvent(event)
-    },
-    'nip07',
-  )
+  await performLink(async (event) => {
+    event.pubkey = await nostr.getPublicKey()
+    return nostr.signEvent(event)
+  }, 'nip07')
 }
 
 async function linkWithBunker() {
@@ -198,7 +212,7 @@ async function linkWithBunker() {
   try {
     const signer = await ui.connectViaBunkerUri(bunkerInput.value.trim())
     await linkWithSigner(signer, 'nip46')
-    await refreshSaved()
+    refreshSaved()
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.link_failed'), 'error')
   } finally {
@@ -218,16 +232,13 @@ async function linkWithQr() {
   busy.value = true
   status.value = null
   try {
-    const signer = await ui.connectViaQr(
-      (uri, dataUrl) => {
-        qrUri.value = uri
-        qrDataUrl.value = dataUrl
-      },
-      qrAbort.signal,
-    )
+    const signer = await ui.connectViaQr((uri, dataUrl) => {
+      qrUri.value = uri
+      qrDataUrl.value = dataUrl
+    }, qrAbort.signal)
     qrOpen.value = false
     await linkWithSigner(signer, 'nip46')
-    await refreshSaved()
+    refreshSaved()
   } catch (e: any) {
     if (!qrAbort.signal.aborted) {
       setStatus(e?.message ?? t('nostr_account.qr_timeout'), 'error')
@@ -248,7 +259,11 @@ function generateLocalKey() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui) return
   const keypair = ui.generateLocalKeypair()
-  generated.value = { secretKeyHex: keypair.secretKeyHex, nsec: keypair.nsec, npub: keypair.npub }
+  generated.value = {
+    secretKeyHex: keypair.secretKeyHex,
+    nsec: keypair.nsec,
+    npub: keypair.npub,
+  }
   revealNsec.value = false
   rememberKey.value = false
 }
@@ -257,8 +272,12 @@ async function useGeneratedKey() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui || !generated.value) return
   if (rememberKey.value) ui.saveLocalKey(generated.value.secretKeyHex)
-  await performLink((event) => ui.createLocalSigner(generated.value!.secretKeyHex).signEvent(event), 'unknown')
-  await refreshSaved()
+  await performLink(
+    (event) =>
+      ui.createLocalSigner(generated.value!.secretKeyHex).signEvent(event),
+    'unknown',
+  )
+  refreshSaved()
 }
 
 async function usePasskey() {
@@ -274,12 +293,18 @@ async function usePasskey() {
     if (pk.hasStoredPasskeyIdentity()) {
       identity = await pk.unlockPasskeyIdentity()
     } else if (generated.value) {
-      identity = await pk.importPasskeyIdentityFromNsec(generated.value.nsec, passkeyOpts())
+      identity = await pk.importPasskeyIdentityFromNsec(
+        generated.value.nsec,
+        passkeyOpts(),
+      )
     } else {
       identity = await pk.registerPasskeyIdentity(passkeyOpts())
     }
-    await linkWithSigner(pk.buildPasskeySignerShim(identity.secretKey), 'passkey')
-    await refreshSaved()
+    await linkWithSigner(
+      pk.buildPasskeySignerShim(identity.secretKey),
+      'passkey',
+    )
+    refreshSaved()
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
   } finally {
@@ -320,9 +345,15 @@ async function restorePasskey() {
   busy.value = true
   status.value = null
   try {
-    const identity = await pk.importPasskeyIdentityFromNsec(restoreNsec.value.trim(), passkeyOpts())
-    await linkWithSigner(pk.buildPasskeySignerShim(identity.secretKey), 'passkey')
-    await refreshSaved()
+    const identity = await pk.importPasskeyIdentityFromNsec(
+      restoreNsec.value.trim(),
+      passkeyOpts(),
+    )
+    await linkWithSigner(
+      pk.buildPasskeySignerShim(identity.secretKey),
+      'passkey',
+    )
+    refreshSaved()
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
   } finally {
@@ -331,18 +362,21 @@ async function restorePasskey() {
   }
 }
 
-async function forgetPasskey() {
+function forgetPasskey() {
   const pk = (window as NostrWindow).NostrPasskey
   if (!pk || !hasPasskey.value) return
   if (!window.confirm(t('nostr_account.passkey_forget_confirm'))) return
   pk.clearPasskeyIdentity()
   recoveryNsec.value = ''
-  await refreshSaved()
+  refreshSaved()
   setStatus(t('nostr_account.passkey_forgotten'))
 }
 
 async function rename(identity: Identity) {
-  const label = window.prompt(t('nostr_account.rename_prompt'), identity.label ?? '')
+  const label = window.prompt(
+    t('nostr_account.rename_prompt'),
+    identity.label ?? '',
+  )
   if (label === null) return
   if (!label.trim()) {
     setStatus(t('nostr_account.rename_required'), 'error')
@@ -377,7 +411,10 @@ async function revoke(identity: Identity) {
 async function unlinkAll() {
   if (!window.confirm(t('nostr_account.unlink_confirm'))) return
   try {
-    await $fetch(`${api()}/nostr/unlink`, { method: 'POST', credentials: 'include' })
+    await $fetch(`${api()}/nostr/unlink`, {
+      method: 'POST',
+      credentials: 'include',
+    })
     ;(window as NostrWindow).NostrConnectUI?.clearAllSaved()
     await Promise.all([load()])
   } catch (e: any) {
@@ -385,14 +422,14 @@ async function unlinkAll() {
   }
 }
 
-async function forgetBunker() {
+function forgetBunker() {
   ;(window as NostrWindow).NostrConnectUI?.clearSaved()
-  await refreshSaved()
+  refreshSaved()
 }
 
-async function forgetLocalKey() {
+function forgetLocalKey() {
   ;(window as NostrWindow).NostrConnectUI?.clearLocalKey()
-  await refreshSaved()
+  refreshSaved()
 }
 
 function formatTimestamp(unix: number | null) {
@@ -421,7 +458,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl">
+  <div class="mx-auto w-full max-w-3xl pb-12">
     <PageTitle :text="t('nostr_account.title')" tag="h1" class="mb-4" />
 
     <BaseAlert
@@ -432,15 +469,17 @@ onMounted(async () => {
       assertive
     />
 
-    <p v-if="loading" class="text-slate-600 dark:text-slate-400">
+    <p v-if="loading" class="text-portal-muted">
       {{ t('nostr_account.loading') }}
     </p>
 
     <template v-else>
-      <p class="mb-4 text-slate-600 dark:text-slate-400">
+      <p class="mb-6 text-sm text-portal-muted">
         {{
           identities.filter((i) => i.enabled).length
-            ? t('nostr_account.has_identities', { count: identities.filter((i) => i.enabled).length })
+            ? t('nostr_account.has_identities', {
+                count: identities.filter((i) => i.enabled).length,
+              })
             : t('nostr_account.no_identities')
         }}
       </p>
@@ -449,73 +488,135 @@ onMounted(async () => {
         <div
           v-for="identity in identities"
           :key="identity.id"
-          class="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+          class="rounded-2xl border border-portal-border bg-portal-surface p-5"
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <span class="font-bold">{{ identity.label || t('nostr_account.unnamed') }}</span>
+              <span class="font-bold">{{
+                identity.label || t('nostr_account.unnamed')
+              }}</span>
               <span
                 v-if="!identity.enabled"
-                class="ms-2 rounded bg-slate-200 px-2 py-0.5 text-xs dark:bg-slate-700"
+                class="ms-2 rounded-md bg-brand-500/10 px-2 py-1 text-xs text-brand-500"
                 >{{ t('nostr_account.revoked') }}</span
               >
             </div>
             <div v-if="identity.enabled" class="flex gap-2">
-              <YButton icon="pencil" :text="t('nostr_account.rename')" @click.prevent="rename(identity)" />
-              <YButton icon="close" :text="t('nostr_account.revoke')" @click.prevent="revoke(identity)" />
+              <YButton
+                icon="pencil"
+                :text="t('nostr_account.rename')"
+                @click.prevent="rename(identity)"
+              />
+              <YButton
+                icon="close"
+                :text="t('nostr_account.revoke')"
+                @click.prevent="revoke(identity)"
+              />
             </div>
           </div>
-          <p class="mt-1 break-all font-mono text-sm opacity-70">{{ identity.npub }}</p>
+          <p class="mt-1 break-all font-mono text-sm opacity-70">
+            {{ identity.npub }}
+          </p>
           <p class="mt-1 text-sm opacity-60">
             {{ signerLabel(identity.signer_type) }} ·
-            {{ t('nostr_account.last_used', { date: formatTimestamp(identity.last_used) }) }}
+            {{
+              t('nostr_account.last_used', {
+                date: formatTimestamp(identity.last_used),
+              })
+            }}
           </p>
         </div>
       </section>
 
-      <section v-if="allowLinking" class="mb-8 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-        <h2 class="mb-3 text-lg font-bold">{{ t('nostr_account.link_section') }}</h2>
+      <section
+        v-if="allowLinking"
+        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
+      >
+        <h2 class="mb-3 text-lg font-bold">
+          {{ t('nostr_account.link_section') }}
+        </h2>
         <div class="mb-4 flex flex-wrap items-center gap-4">
-          <label class="flex items-center gap-2">
-            <input v-model="linkMode" type="radio" value="replace" />
+          <label
+            for="link-mode-replace"
+            class="flex items-center gap-2 text-sm"
+          >
+            <input
+              id="link-mode-replace"
+              v-model="linkMode"
+              class="accent-brand-500"
+              type="radio"
+              value="replace"
+            />
             {{ t('nostr_account.mode_replace') }}
           </label>
-          <label class="flex items-center gap-2">
-            <input v-model="linkMode" type="radio" value="add" :disabled="!identities.length" />
+          <label for="link-mode-add" class="flex items-center gap-2 text-sm">
+            <input
+              id="link-mode-add"
+              v-model="linkMode"
+              class="accent-brand-500"
+              type="radio"
+              value="add"
+              :disabled="!identities.length"
+            />
             {{ t('nostr_account.mode_add') }}
           </label>
-          <label class="sr-only" for="nostr-account-label">Label</label>
           <input
             id="nostr-account-label"
+            aria-label="Identity label"
             v-model="identityLabel"
-            class="rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+            class="portal-account-input"
             :placeholder="t('nostr_account.label_placeholder')"
             autocomplete="off"
           />
         </div>
 
         <div class="space-y-2">
-          <YButton icon="login" :text="t('nostr_account.link_nip07')" block :disabled="busy" @click.prevent="linkWithNip07" />
+          <YButton
+            icon="login"
+            :text="t('nostr_account.link_nip07')"
+            block
+            :disabled="busy"
+            @click.prevent="linkWithNip07"
+          />
 
           <div class="flex gap-2">
             <input
               v-model="bunkerInput"
-              class="flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              aria-label="Remote signer address"
+              class="portal-account-input min-w-0 flex-1"
               :placeholder="t('nostr_account.bunker_placeholder')"
               autocomplete="off"
             />
-            <YButton :text="t('nostr_account.bunker_connect')" :disabled="busy || !bunkerInput.trim()" @click.prevent="linkWithBunker" />
-            <YButton :text="t('nostr_account.qr_show')" :disabled="busy" @click.prevent="linkWithQr" />
+            <YButton
+              :text="t('nostr_account.bunker_connect')"
+              :disabled="busy || !bunkerInput.trim()"
+              @click.prevent="linkWithBunker"
+            />
+            <YButton
+              :text="t('nostr_account.qr_show')"
+              :disabled="busy"
+              @click.prevent="linkWithQr"
+            />
           </div>
 
-          <div v-if="qrOpen" class="flex flex-col items-center gap-2 rounded border border-slate-200 p-4 dark:border-slate-700">
+          <div
+            v-if="qrOpen"
+            class="flex flex-col items-center gap-2 rounded-xl border border-portal-border bg-portal-elevated p-4"
+          >
             <img v-if="qrDataUrl" :src="qrDataUrl" class="h-52 w-52" alt="" />
             <p class="break-all text-xs opacity-60">{{ qrUri }}</p>
-            <YButton :text="t('nostr_account.qr_cancel')" @click.prevent="cancelQr" />
+            <YButton
+              :text="t('nostr_account.qr_cancel')"
+              @click.prevent="cancelQr"
+            />
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <YButton :text="t('nostr_account.generate')" :disabled="busy" @click.prevent="generateLocalKey" />
+            <YButton
+              :text="t('nostr_account.generate')"
+              :disabled="busy"
+              @click.prevent="generateLocalKey"
+            />
             <YButton
               v-if="hasPasskey"
               :text="t('nostr_account.passkey_use')"
@@ -524,7 +625,11 @@ onMounted(async () => {
             />
             <YButton
               v-else
-              :text="generated ? t('nostr_account.passkey_protect') : t('nostr_account.passkey_create')"
+              :text="
+                generated
+                  ? t('nostr_account.passkey_protect')
+                  : t('nostr_account.passkey_create')
+              "
               :disabled="busy"
               @click.prevent="usePasskey"
             />
@@ -544,60 +649,106 @@ onMounted(async () => {
 
           <div v-if="recoveryNsec" class="space-y-2">
             <p class="break-all font-mono text-xs">{{ recoveryNsec }}</p>
-            <YButton :text="t('nostr_account.recovery_copy')" @click.prevent="copyRecovery" />
+            <YButton
+              :text="t('nostr_account.recovery_copy')"
+              @click.prevent="copyRecovery"
+            />
           </div>
 
           <div v-if="!hasPasskey" class="flex gap-2">
             <input
               v-model="restoreNsec"
-              class="flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              aria-label="Recovery key"
+              class="portal-account-input min-w-0 flex-1"
               :placeholder="t('nostr_account.recovery_restore_placeholder')"
               autocomplete="off"
             />
-            <YButton :text="t('nostr_account.recovery_restore')" :disabled="busy || !restoreNsec.trim()" @click.prevent="restorePasskey" />
+            <YButton
+              :text="t('nostr_account.recovery_restore')"
+              :disabled="busy || !restoreNsec.trim()"
+              @click.prevent="restorePasskey"
+            />
           </div>
 
           <div
             v-if="generated"
-            class="rounded border border-slate-200 p-4 dark:border-slate-700"
+            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
           >
             <p class="break-all font-mono text-sm">{{ generated.npub }}</p>
-            <p class="mt-1 break-all font-mono text-sm">{{ revealNsec ? generated.nsec : '•'.repeat(63) }}</p>
+            <p class="mt-1 break-all font-mono text-sm">
+              {{ revealNsec ? generated.nsec : '•'.repeat(63) }}
+            </p>
             <div class="mt-2 flex flex-wrap items-center gap-3">
               <YButton
-                :text="revealNsec ? t('nostr_account.hide_nsec') : t('nostr_account.reveal_nsec')"
+                :text="
+                  revealNsec
+                    ? t('nostr_account.hide_nsec')
+                    : t('nostr_account.reveal_nsec')
+                "
                 @click.prevent="revealNsec = !revealNsec"
               />
-              <YButton :text="t('nostr_account.copy_nsec')" @click.prevent="navigator.clipboard.writeText(generated.nsec)" />
-              <label class="flex items-center gap-2 text-sm">
-                <input v-model="rememberKey" type="checkbox" />
+              <YButton
+                :text="t('nostr_account.copy_nsec')"
+                @click.prevent="navigator.clipboard.writeText(generated.nsec)"
+              />
+              <label
+                for="remember-generated-key"
+                class="flex items-center gap-2 text-sm"
+              >
+                <input
+                  id="remember-generated-key"
+                  v-model="rememberKey"
+                  class="accent-brand-500"
+                  type="checkbox"
+                />
                 {{ t('nostr_account.remember_key') }}
               </label>
-              <YButton :text="t('nostr_account.use_generated')" :disabled="busy" @click.prevent="useGeneratedKey" />
+              <YButton
+                :text="t('nostr_account.use_generated')"
+                :disabled="busy"
+                @click.prevent="useGeneratedKey"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      <section v-else class="mb-8 rounded-lg border border-slate-200 p-4 text-slate-600 dark:border-slate-700 dark:text-slate-400">
+      <section
+        v-else
+        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5 text-portal-muted"
+      >
         {{ t('nostr_account.linking_disabled') }}
       </section>
 
       <section
         v-if="savedSigners || hasLocalKey"
-        class="mb-8 rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5"
       >
-        <h2 class="mb-3 text-lg font-bold">{{ t('nostr_account.saved_signers') }}</h2>
-        <div v-if="savedSigners" class="flex items-center justify-between gap-2 py-1">
+        <h2 class="mb-3 text-lg font-bold">
+          {{ t('nostr_account.saved_signers') }}
+        </h2>
+        <div
+          v-if="savedSigners"
+          class="flex items-center justify-between gap-2 py-1"
+        >
           <span class="text-sm">
             {{ t('nostr_account.saved_bunker') }}:
             <span class="font-mono">{{ savedSigners.relays.join(', ') }}</span>
           </span>
-          <YButton :text="t('nostr_account.forget')" @click.prevent="forgetBunker" />
+          <YButton
+            :text="t('nostr_account.forget')"
+            @click.prevent="forgetBunker"
+          />
         </div>
-        <div v-if="hasLocalKey" class="flex items-center justify-between gap-2 py-1">
+        <div
+          v-if="hasLocalKey"
+          class="flex items-center justify-between gap-2 py-1"
+        >
           <span class="text-sm">{{ t('nostr_account.saved_local') }}</span>
-          <YButton :text="t('nostr_account.forget')" @click.prevent="forgetLocalKey" />
+          <YButton
+            :text="t('nostr_account.forget')"
+            @click.prevent="forgetLocalKey"
+          />
         </div>
       </section>
 
@@ -611,3 +762,9 @@ onMounted(async () => {
     </template>
   </div>
 </template>
+
+<style scoped>
+.portal-account-input {
+  @apply rounded-[10px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
+}
+</style>

@@ -54,7 +54,7 @@ provide(formGroupExtras, {
         <label
           :id="name + '__label'"
           :for="name"
-          class="block ms-1"
+          class="block ms-1 text-sm font-semibold text-portal-foreground"
           :class="{ 'sr-only': srHideLabel, flex: !!icon, 'mb-2': !icon }"
         >
           <YIcon
@@ -85,7 +85,7 @@ provide(formGroupExtras, {
           v-if="description"
           :id="name + '__description'"
           tabindex="-1"
-          class="block text-gray-400 mt-1"
+          class="mt-1 block text-sm text-portal-muted"
         >
           {{ description }}
         </small>

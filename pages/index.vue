@@ -78,7 +78,7 @@ const tileClasses = computed(() => {
           id="search"
           v-model="search"
           type="search"
-          class="w-full rounded-l-md border border-r-0 border-gray-300 bg-white px-3 py-2 text-sm focus:z-10 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+          class="w-full rounded-l-[10px] border border-r-0 border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:z-10 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           name="search"
           :placeholder="
             t('search_engine_placeholder', {
@@ -88,7 +88,7 @@ const tileClasses = computed(() => {
         />
         <button
           type="submit"
-          class="flex shrink-0 items-center rounded-r-md bg-brand-600 px-3 text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+          class="flex shrink-0 items-center rounded-r-[10px] bg-brand-500 px-4 text-white transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
           @click="onSearchSubmit"
         >
           <YIcon name="magnify" aria-hidden="true" class="m-0" />
@@ -112,14 +112,18 @@ const tileClasses = computed(() => {
         <li
           v-for="app in apps"
           :key="app.label"
-          class="app-tile text-align relative flex flex-auto flex-nowrap items-start justify-normal rounded-lg p-5 text-left font-normal transition-colors"
+          class="app-tile text-align relative flex flex-auto flex-nowrap items-start justify-normal rounded-2xl border border-portal-border bg-portal-surface p-5 text-left font-normal text-portal-foreground shadow-sm transition-colors"
           :class="tileClasses.tile"
           :style="`--label-hash: ${app.label_hash}`"
         >
           <img
             v-if="settings.portal_tile_theme !== 'periodic'"
             aria-hidden
-            :src="app.logo ? app.logo : 'data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='"
+            :src="
+              app.logo
+                ? app.logo
+                : 'data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+            "
             class="app-logo w-24 h-24 min-w-24 rounded-xl"
             :class="tileClasses.img"
             alt=""
@@ -170,16 +174,11 @@ const tileClasses = computed(() => {
   grid-template-rows: repeat(auto-fill, 180px);
 }
 
-#app-tiles.simple .app-tile,
-#app-tiles.descriptive .app-tile {
-  background-color: #1112;
-  border: none;
-}
-
 #app-tiles.simple .app-tile:hover,
 #app-tiles.descriptive .app-tile:hover {
-  background-color: #7777;
-  border: none;
+  border-color: theme('colors.brand.500');
+  background-color: rgb(var(--portal-elevated));
+  box-shadow: 0 8px 24px rgb(18 18 34 / 10%);
 }
 
 #app-tiles.periodic .app-tile {

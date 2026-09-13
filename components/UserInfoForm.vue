@@ -2,14 +2,13 @@
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import * as yup from 'yup'
-import { exclude, pick } from '@/utils/common'
+import { pick } from '@/utils/common'
 import type { User } from '@/composables/states'
 import type { Feedback } from '@/composables/form'
 
 const { t } = useI18n()
 
 const user = await useUser()
-const settings = await useSettings()
 const loading: Ref<boolean> = ref(false)
 const feedback: Ref<Feedback> = ref(null)
 
@@ -17,13 +16,10 @@ const { handleSubmit, setFieldError, resetForm, meta } = useForm({
   validationSchema: toTypedSchema(
     yup.object({
       fullname: yup.string().required().min(2),
-      mail: yup.string(),
-      mailalias: yup.array().of(yup.string().email().required()).required(),
-      mailforward: yup.array().of(yup.string().email().required()).required(),
     }),
   ),
   initialValues: {
-    ...pick(user.value, 'fullname', 'mail', 'mailalias', 'mailforward'),
+    ...pick(user.value, 'fullname'),
   },
 })
 
@@ -40,27 +36,14 @@ watch(
 const onSubmit = handleSubmit(async (form) => {
   loading.value = true
 
-  let excludedFields = []
-  if (!settings.value.portal_allow_edit_email) {
-    excludedFields.push('mail')
-  }
-  if (!settings.value.portal_allow_edit_email_alias) {
-    excludedFields.push('mailalias')
-  }
-  if (!settings.value.portal_allow_edit_email_forward) {
-    excludedFields.push('mailforward')
-  }
-
-  const { error, data } = await useApi<
-    Pick<User, 'fullname' | 'mail' | 'mailalias' | 'mailforward'>
-  >('/update', {
+  const { error, data } = await useApi<Pick<User, 'fullname'>>('/update', {
     method: 'PUT',
-    body: exclude(form, ...excludedFields),
+    body: form,
   })
 
   if (error.value) {
     // Reset form dirty state but keep previous values
-    resetForm({ values: { ...form, mail: user.value.mail } })
+    resetForm({ values: form })
     const errData = error.value.data
     let message
 
@@ -78,7 +61,7 @@ const onSubmit = handleSubmit(async (form) => {
   } else if (data.value) {
     Object.assign(user.value, data.value)
     resetForm({
-      values: { ...data.value, mail: user.value.mail },
+      values: data.value,
     })
     feedback.value = {
       variant: 'success',
@@ -93,7 +76,7 @@ const onSubmit = handleSubmit(async (form) => {
 
 <template>
   <YForm :loading="loading" :feedback="feedback" @submit.prevent="onSubmit">
-    <FormField name="fullname" :label="$t('fullname')" class="mb-10">
+    <FormField name="fullname" :label="$t('fullname')" class="mb-6">
       <TextInput
         name="fullname"
         type="text"
@@ -102,30 +85,5 @@ const onSubmit = handleSubmit(async (form) => {
         class="w-full"
       />
     </FormField>
-
-    <FormField name="mail" :label="$t('primary_mail_adress')" class="mb-10">
-      <TextInput name="mail" type="text" class="w-full" :disabled="!settings.portal_allow_edit_email" />
-    </FormField>
-
-    <TextInputList
-      name="mailalias"
-      type="email"
-      :label="$t('mail_addresses')"
-      :input-label="$t('mail_address')"
-      :button-label="$t('add_mail')"
-      :placeholder="$t('new_mail')"
-      class="mb-10"
-      :disabled="!settings.portal_allow_edit_email_alias"
-    />
-
-    <TextInputList
-      name="mailforward"
-      type="email"
-      :label="$t('mail_forwards')"
-      :input-label="$t('mail_forward')"
-      :button-label="$t('add_forward')"
-      :placeholder="$t('new_forward')"
-      :disabled="!settings.portal_allow_edit_email_forward"
-    />
   </YForm>
 </template>
