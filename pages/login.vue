@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { nip19 } from 'nostr-tools'
+import { hexToBytes } from 'nostr-tools/utils'
+
 definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
 const settings = await useSettings()
@@ -21,6 +24,7 @@ const queryMsg = useQueryMsg()
 const error = ref<string | null>(null)
 const busy = ref(false)
 const bunker = ref('')
+const nsec = ref('')
 const passkeyAvailable = ref(false)
 
 type NostrSigner = {
@@ -115,6 +119,39 @@ async function signInWithPasskey() {
   } catch (e: any) {
     error.value = e?.message ?? t('nostr.login_failed')
   } finally {
+    busy.value = false
+  }
+}
+
+function decodeNsec(input: string): Uint8Array {
+  const value = input.trim()
+  if (/^[0-9a-fA-F]{64}$/.test(value)) return hexToBytes(value)
+  try {
+    const decoded = nip19.decode(value)
+    if (decoded.type !== 'nsec') throw new Error()
+    return decoded.data
+  } catch {
+    throw new Error(t('nostr.nsec_invalid'))
+  }
+}
+
+async function signInWithNsec() {
+  const passkey = (window as NostrWindow).NostrPasskey
+  if (!passkey) {
+    error.value = t('nostr.login_failed')
+    return
+  }
+  busy.value = true
+  error.value = null
+  let secretKey: Uint8Array | null = null
+  try {
+    secretKey = decodeNsec(nsec.value)
+    await signInWithSigner(passkey.buildPasskeySignerShim(secretKey))
+    nsec.value = ''
+  } catch (e: any) {
+    error.value = e?.message ?? t('nostr.login_failed')
+  } finally {
+    secretKey?.fill(0)
     busy.value = false
   }
 }
@@ -241,6 +278,41 @@ onMounted(() => {
           :disabled="busy || !bunker.trim()"
         />
       </form>
+
+      <details class="mt-6">
+        <summary
+          class="cursor-pointer select-none text-xs font-medium text-portal-muted"
+        >
+          {{ t('nostr.advanced') }}
+        </summary>
+        <div class="mt-3 space-y-3">
+          <BaseAlert
+            variant="warning"
+            icon="alert-outline"
+            :message="t('nostr.nsec_warning')"
+          />
+          <form class="space-y-3" @submit.prevent="signInWithNsec">
+            <input
+              id="nostr-nsec"
+              v-model="nsec"
+              aria-label="Private key"
+              type="password"
+              class="w-full rounded-[10px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              :placeholder="t('nostr.nsec_placeholder')"
+              autocomplete="off"
+              spellcheck="false"
+              :disabled="busy"
+            />
+            <YButton
+              type="submit"
+              :text="t('nostr.nsec_sign_in')"
+              variant="secondary"
+              block
+              :disabled="busy || !nsec.trim()"
+            />
+          </form>
+        </div>
+      </details>
     </section>
 
     <p class="absolute bottom-5 px-5 text-center text-xs text-portal-muted">
