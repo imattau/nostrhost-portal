@@ -149,6 +149,14 @@ async function signInWithNsec() {
 }
 
 onMounted(() => {
+  // Single sign-in redirect target: the `r` query param (base64 of the URL
+  // to return to) set by the admin console / forward_auth. Populate the
+  // shared redirect state so a successful login returns the user to the
+  // console instead of the portal home.
+  const params = new URLSearchParams(window.location.search)
+  const r = params.get('r')
+  if (r) redirectUrl.value = r
+
   passkeyAvailable.value = hasStoredPasskeyIdentity()
 })
 </script>
