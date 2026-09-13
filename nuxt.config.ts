@@ -48,7 +48,8 @@ export default defineNuxtConfig({
     locales: locales as LocaleObject[],
   },
   colorMode: {
-    preference: 'system',
+    preference: 'dark',
+    fallback: 'dark',
     dataValue: 'theme',
     classSuffix: '',
   },
