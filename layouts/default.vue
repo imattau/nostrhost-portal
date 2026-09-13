@@ -12,10 +12,21 @@ const portalTitle = computed(() =>
 )
 const user = await useUser<User | null>()
 
-const footerLinks = computed(() => [
-  { text: t('footerlink_edit'), to: '/edit' },
-  { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
-])
+const footerLinks = computed(() => {
+  const links: { text: string; to: string; newWindow?: boolean }[] = [
+    { text: t('footerlink_edit'), to: '/edit' },
+    { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
+  ]
+  // The admin console is same-origin and only meaningful for admins; the
+  // console itself refuses non-admins, so gate the link on the account flag.
+  if (user.value?.admin) {
+    links.push({
+      text: t('footerlink_administration'),
+      to: '/nostrhost/admin/',
+    })
+  }
+  return links
+})
 
 async function logout() {
   const { error } = await useApi('/logout')

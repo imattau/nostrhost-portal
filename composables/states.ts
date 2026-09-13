@@ -147,6 +147,7 @@ export interface User {
   mailalias: string[]
   mailforward: string[]
   groups: string[]
+  admin: boolean
   apps: AppsSettings
 }
 
