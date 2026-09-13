@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import {
+  hasStoredPasskeyIdentity,
+  unlockPasskeyIdentity,
+  buildPasskeySignerShim,
+  registerPasskeyIdentity,
+  importPasskeyIdentityFromNsec,
+  exportPasskeyIdentityAsNsec,
+  clearPasskeyIdentity,
+} from 'nostr-passkey'
+
 definePageMeta({
   public: false,
 })
@@ -10,7 +20,6 @@ useHead({
   script: [
     { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
     { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
-    { src: '/nostrhost/sso/nostr/nostr-passkey-vendor.js', defer: true },
   ],
 })
 
@@ -47,20 +56,6 @@ type NostrWindow = Window & {
     }
     createLocalSigner(secretKeyHex: string): NostrSigner
     saveLocalKey(secretKeyHex: string): void
-  }
-  NostrPasskey?: {
-    hasStoredPasskeyIdentity(): boolean
-    unlockPasskeyIdentity(): Promise<{ secretKey: Uint8Array }>
-    buildPasskeySignerShim(key: Uint8Array): NostrSigner
-    registerPasskeyIdentity(
-      opts: Record<string, unknown>,
-    ): Promise<{ secretKey: Uint8Array }>
-    importPasskeyIdentityFromNsec(
-      nsec: string,
-      opts: Record<string, unknown>,
-    ): Promise<{ secretKey: Uint8Array }>
-    exportPasskeyIdentityAsNsec(): Promise<string>
-    clearPasskeyIdentity(): void
   }
 }
 
@@ -122,10 +117,9 @@ function setStatus(text: string, kind: 'success' | 'error' = 'success') {
 
 function refreshSaved() {
   const ui = (window as NostrWindow).NostrConnectUI
-  const pk = (window as NostrWindow).NostrPasskey
   savedSigners.value = ui?.getSavedInfo() ?? null
   hasLocalKey.value = !!ui?.hasLocalKey()
-  hasPasskey.value = !!pk?.hasStoredPasskeyIdentity()
+  hasPasskey.value = hasStoredPasskeyIdentity()
   if (!hasPasskey.value) recoveryNsec.value = ''
 }
 
@@ -281,29 +275,21 @@ async function useGeneratedKey() {
 }
 
 async function usePasskey() {
-  const pk = (window as NostrWindow).NostrPasskey
-  if (!pk) {
-    setStatus(t('nostr_account.passkey_unavailable'), 'error')
-    return
-  }
   busy.value = true
   status.value = null
   try {
     let identity
-    if (pk.hasStoredPasskeyIdentity()) {
-      identity = await pk.unlockPasskeyIdentity()
+    if (hasStoredPasskeyIdentity()) {
+      identity = await unlockPasskeyIdentity()
     } else if (generated.value) {
-      identity = await pk.importPasskeyIdentityFromNsec(
+      identity = await importPasskeyIdentityFromNsec(
         generated.value.nsec,
         passkeyOpts(),
       )
     } else {
-      identity = await pk.registerPasskeyIdentity(passkeyOpts())
+      identity = await registerPasskeyIdentity(passkeyOpts())
     }
-    await linkWithSigner(
-      pk.buildPasskeySignerShim(identity.secretKey),
-      'passkey',
-    )
+    await linkWithSigner(buildPasskeySignerShim(identity.secretKey), 'passkey')
     refreshSaved()
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
@@ -313,14 +299,13 @@ async function usePasskey() {
 }
 
 async function revealRecovery() {
-  const pk = (window as NostrWindow).NostrPasskey
-  if (!pk || !hasPasskey.value) return
+  if (!hasPasskey.value) return
   if (recoveryNsec.value) {
     recoveryNsec.value = ''
     return
   }
   try {
-    recoveryNsec.value = await pk.exportPasskeyIdentityAsNsec()
+    recoveryNsec.value = await exportPasskeyIdentityAsNsec()
     setStatus(t('nostr_account.recovery_revealed'))
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.recovery_failed'), 'error')
@@ -340,19 +325,15 @@ async function copyRecovery() {
 const restoreNsec = ref('')
 
 async function restorePasskey() {
-  const pk = (window as NostrWindow).NostrPasskey
-  if (!pk || hasPasskey.value || !restoreNsec.value.trim()) return
+  if (hasPasskey.value || !restoreNsec.value.trim()) return
   busy.value = true
   status.value = null
   try {
-    const identity = await pk.importPasskeyIdentityFromNsec(
+    const identity = await importPasskeyIdentityFromNsec(
       restoreNsec.value.trim(),
       passkeyOpts(),
     )
-    await linkWithSigner(
-      pk.buildPasskeySignerShim(identity.secretKey),
-      'passkey',
-    )
+    await linkWithSigner(buildPasskeySignerShim(identity.secretKey), 'passkey')
     refreshSaved()
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
@@ -363,10 +344,9 @@ async function restorePasskey() {
 }
 
 function forgetPasskey() {
-  const pk = (window as NostrWindow).NostrPasskey
-  if (!pk || !hasPasskey.value) return
+  if (!hasPasskey.value) return
   if (!window.confirm(t('nostr_account.passkey_forget_confirm'))) return
-  pk.clearPasskeyIdentity()
+  clearPasskeyIdentity()
   recoveryNsec.value = ''
   refreshSaved()
   setStatus(t('nostr_account.passkey_forgotten'))

@@ -5388,6 +5388,11 @@ normalize-range@^0.1.2:
   resolved "https://registry.yarnpkg.com/normalize-range/-/normalize-range-0.1.2.tgz#2d10c06bdfd312ea9777695a4d28439456b75942"
   integrity sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==
 
+nostr-passkey@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/nostr-passkey/-/nostr-passkey-0.4.0.tgz#e9a33c2ee43a4241d4ce9fa4138230e0bb3f35e2"
+  integrity sha512-qTs7rF2rDtPNiNPIXISbMsCpqlB0Rv0cK88V4gqGB3haG7R2n3vRUKcePagbr8sFH5J5AZzXUfwqn8A0+FeKzA==
+
 nostr-tools@^2.25.2:
   version "2.25.2"
   resolved "https://registry.yarnpkg.com/nostr-tools/-/nostr-tools-2.25.2.tgz#cedec2f8024c190506cf9925e082810e1be98525"

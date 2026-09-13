@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { nip19 } from 'nostr-tools'
 import { hexToBytes } from 'nostr-tools/utils'
+import {
+  hasStoredPasskeyIdentity,
+  unlockPasskeyIdentity,
+  buildPasskeySignerShim,
+} from 'nostr-passkey'
 
 definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
@@ -15,7 +20,6 @@ useHead({
   script: [
     { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
     { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
-    { src: '/nostrhost/sso/nostr/nostr-passkey-vendor.js', defer: true },
   ],
 })
 const isLoggedIn = useIsLoggedIn()
@@ -36,11 +40,6 @@ type NostrWindow = Window & {
     signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
   }
   NostrConnectUI?: { connectViaBunkerUri(value: string): Promise<NostrSigner> }
-  NostrPasskey?: {
-    hasStoredPasskeyIdentity(): boolean
-    unlockPasskeyIdentity(): Promise<{ secretKey: Uint8Array }>
-    buildPasskeySignerShim(key: Uint8Array): NostrSigner
-  }
 }
 
 async function signInWithSigner(signer: NostrSigner) {
@@ -109,13 +108,11 @@ async function signInWithBunker() {
 }
 
 async function signInWithPasskey() {
-  const passkey = (window as NostrWindow).NostrPasskey
-  if (!passkey) return
   busy.value = true
   error.value = null
   try {
-    const identity = await passkey.unlockPasskeyIdentity()
-    await signInWithSigner(passkey.buildPasskeySignerShim(identity.secretKey))
+    const identity = await unlockPasskeyIdentity()
+    await signInWithSigner(buildPasskeySignerShim(identity.secretKey))
   } catch (e: any) {
     error.value = e?.message ?? t('nostr.login_failed')
   } finally {
@@ -136,17 +133,12 @@ function decodeNsec(input: string): Uint8Array {
 }
 
 async function signInWithNsec() {
-  const passkey = (window as NostrWindow).NostrPasskey
-  if (!passkey) {
-    error.value = t('nostr.login_failed')
-    return
-  }
   busy.value = true
   error.value = null
   let secretKey: Uint8Array | null = null
   try {
     secretKey = decodeNsec(nsec.value)
-    await signInWithSigner(passkey.buildPasskeySignerShim(secretKey))
+    await signInWithSigner(buildPasskeySignerShim(secretKey))
     nsec.value = ''
   } catch (e: any) {
     error.value = e?.message ?? t('nostr.login_failed')
@@ -157,20 +149,7 @@ async function signInWithNsec() {
 }
 
 onMounted(() => {
-  // The passkey vendor is injected as a deferred script, which may not
-  // have executed by the time this component mounts. Poll briefly so a
-  // stored passkey identity surfaces the "Use passkey" button even when
-  // the script tag resolves late.
-  let attempts = 0
-  const check = () => {
-    const passkey = (window as NostrWindow).NostrPasskey
-    if (passkey) {
-      passkeyAvailable.value = !!passkey.hasStoredPasskeyIdentity()
-    } else if (attempts++ < 50) {
-      setTimeout(check, 100)
-    }
-  }
-  check()
+  passkeyAvailable.value = hasStoredPasskeyIdentity()
 })
 </script>
 
