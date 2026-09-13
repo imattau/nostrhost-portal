@@ -77,7 +77,8 @@
         "nsec_warning": "Pasting a private key is less safe than a browser extension or remote signer. It is used only in this browser to sign in, and is never stored or sent to the server.",
         "nsec_placeholder": "nsec1… or 64-character hex private key",
         "nsec_sign_in": "Sign in with private key",
-        "nsec_invalid": "That doesn't look like a valid nsec or hex private key."
+        "nsec_invalid": "That doesn't look like a valid nsec or hex private key.",
+        "nsec_create_passkey": "Protect this key with a passkey on this device"
     },
     "nostr_account": {
         "title": "Nostr identity",

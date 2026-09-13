@@ -5,6 +5,7 @@ import {
   hasStoredPasskeyIdentity,
   unlockPasskeyIdentity,
   buildPasskeySignerShim,
+  importPasskeyIdentityFromNsec,
 } from 'nostr-passkey'
 
 definePageMeta({ layout: false, public: true })
@@ -29,6 +30,7 @@ const error = ref<string | null>(null)
 const busy = ref(false)
 const bunker = ref('')
 const nsec = ref('')
+const createPasskey = ref(false)
 const passkeyAvailable = ref(false)
 
 type NostrSigner = {
@@ -137,9 +139,22 @@ async function signInWithNsec() {
   error.value = null
   let secretKey: Uint8Array | null = null
   try {
+    // Validate locally before optionally handing the raw nsec to the
+    // passkey enrollment flow below - it does its own parsing, but failing
+    // fast here keeps the error message consistent between the two paths.
     secretKey = decodeNsec(nsec.value)
+    if (createPasskey.value) {
+      const identity = await importPasskeyIdentityFromNsec(nsec.value.trim(), {
+        rpName: 'NostrHost Identity',
+        userName: 'nostr-identity',
+        displayName: 'NostrHost Identity',
+      })
+      secretKey.fill(0)
+      secretKey = identity.secretKey
+    }
     await signInWithSigner(buildPasskeySignerShim(secretKey))
     nsec.value = ''
+    createPasskey.value = false
   } catch (e: any) {
     error.value = e?.message ?? t('nostr.login_failed')
   } finally {
@@ -290,6 +305,20 @@ onMounted(() => {
               spellcheck="false"
               :disabled="busy"
             />
+            <label
+              v-if="!passkeyAvailable"
+              for="nsec-create-passkey"
+              class="flex items-center gap-2 text-sm text-portal-muted"
+            >
+              <input
+                id="nsec-create-passkey"
+                v-model="createPasskey"
+                class="accent-brand-500"
+                type="checkbox"
+                :disabled="busy"
+              />
+              {{ t('nostr.nsec_create_passkey') }}
+            </label>
             <YButton
               type="submit"
               :text="t('nostr.nsec_sign_in')"
