@@ -46,16 +46,16 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
 <template>
   <div class="mx-auto w-full max-w-5xl pb-12">
     <PageTitle :text="$t('footerlink_edit')" class="mb-2" />
-    <p class="mb-8 text-sm text-portal-muted">
+    <p class="mb-6 text-sm text-portal-muted">
       Manage your portal preferences and Nostr sign-in methods.
     </p>
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div class="space-y-6">
         <section
-          class="rounded-2xl border border-portal-border bg-portal-surface p-6 sm:p-8"
+          class="rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
         >
-          <div class="mb-6 flex items-center gap-4">
+          <div class="mb-4 flex items-center gap-4">
             <div
               class="grid size-14 shrink-0 place-items-center rounded-full border-2 border-brand-500 bg-brand-500/10 text-lg font-bold text-brand-500"
             >
@@ -70,15 +70,15 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
               </p>
             </div>
           </div>
-          <div class="mb-6 h-px bg-portal-border" />
+          <div class="mb-4 h-px bg-portal-border" />
           <UserInfoForm />
         </section>
 
         <section
-          class="rounded-2xl border border-portal-border bg-portal-surface p-6 sm:p-8"
+          class="rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
         >
           <h2 class="text-lg font-bold">{{ t('edit_browser_settings') }}</h2>
-          <p class="mb-6 mt-1 text-sm text-portal-muted">
+          <p class="mb-4 mt-1 text-sm text-portal-muted">
             These preferences are stored in this browser.
           </p>
           <form class="grid gap-5 sm:grid-cols-2" novalidate @submit.prevent>

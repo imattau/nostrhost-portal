@@ -64,7 +64,7 @@ const tileClasses = computed(() => {
   <div>
     <CustomText v-if="intro" :content="intro" />
 
-    <form v-if="settings.search_engine" class="flex my-16" @submit.prevent>
+    <form v-if="settings.search_engine" class="flex my-10" @submit.prevent>
       <div class="mx-auto flex w-full max-w-xl">
         <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
         <label for="search" class="sr-only">
@@ -97,7 +97,7 @@ const tileClasses = computed(() => {
       </div>
     </form>
 
-    <section id="apps" class="my-16">
+    <section id="apps" class="my-10">
       <PageTitle :text="t('app_list')" tag="h2" sr-only class="mb-4" />
 
       <div v-if="!apps.length">

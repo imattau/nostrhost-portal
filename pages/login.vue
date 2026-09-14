@@ -186,9 +186,9 @@ onMounted(() => {
     />
 
     <section
-      class="relative w-full max-w-[460px] rounded-3xl border border-portal-border bg-portal-surface p-6 shadow-2xl sm:p-12"
+      class="relative w-full max-w-[460px] rounded-3xl border border-portal-border bg-portal-surface p-6 shadow-2xl sm:p-8"
     >
-      <div class="mb-8 flex flex-col items-center text-center">
+      <div class="mb-6 flex flex-col items-center text-center">
         <div
           class="mb-4 grid size-12 place-items-center rounded-xl bg-brand-500/10 text-brand-500"
         >
