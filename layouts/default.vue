@@ -66,7 +66,7 @@ async function logout() {
     />
 
     <header
-      class="mb-8 rounded-2xl border border-portal-border bg-portal-surface px-5 py-4 sm:px-6"
+      class="mb-6 rounded-2xl border border-portal-border bg-portal-surface px-5 py-4 sm:px-6"
     >
       <div id="focus-reset" class="h-10 -mt-10 focus-target" tabindex="-1">
         <a class="link sr-only focus:not-sr-only" href="#main-target">

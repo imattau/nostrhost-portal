@@ -464,7 +464,7 @@ onMounted(async () => {
         }}
       </p>
 
-      <section v-if="identities.length" class="mb-8 space-y-3">
+      <section v-if="identities.length" class="mb-6 space-y-3">
         <div
           v-for="identity in identities"
           :key="identity.id"
@@ -512,7 +512,7 @@ onMounted(async () => {
 
       <section
         v-if="allowLinking"
-        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
+        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
       >
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.link_section') }}
@@ -750,14 +750,14 @@ onMounted(async () => {
 
       <section
         v-else
-        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5 text-portal-muted"
+        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5 text-portal-muted"
       >
         {{ t('nostr_account.linking_disabled') }}
       </section>
 
       <section
         v-if="savedSigners || hasLocalKey"
-        class="mb-8 rounded-2xl border border-portal-border bg-portal-surface p-5"
+        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5"
       >
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.saved_signers') }}
