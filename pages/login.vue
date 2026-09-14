@@ -89,7 +89,7 @@ async function signInWithNostr() {
       },
     })
   } catch (e: any) {
-    error.value = e?.data ?? t('nostr.login_failed')
+    error.value = e?.message ?? t('nostr.login_failed')
   } finally {
     busy.value = false
   }
@@ -197,7 +197,7 @@ onMounted(() => {
         <span
           class="mb-4 rounded-full border border-brand-500 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-brand-500"
         >
-          Private cloud hub
+          {{ t('nostr.tagline') }}
         </span>
         <h1
           class="text-2xl font-extrabold tracking-tight text-portal-foreground"
@@ -248,7 +248,7 @@ onMounted(() => {
         <YButton
           v-if="passkeyAvailable"
           icon="lock"
-          text="Use passkey"
+          :text="t('nostr.use_passkey')"
           block
           variant="secondary"
           :disabled="busy"
@@ -258,15 +258,15 @@ onMounted(() => {
 
       <div class="my-6 flex items-center gap-3 text-xs text-portal-muted">
         <span class="h-px flex-1 bg-portal-border" />
-        Or connect a remote signer
+        {{ t('nostr.or_remote_signer') }}
         <span class="h-px flex-1 bg-portal-border" />
       </div>
 
       <form class="space-y-3" @submit.prevent="signInWithBunker">
         <input
           id="nostr-bunker"
-          aria-label="Remote signer address"
           v-model="bunker"
+          :aria-label="t('nostr.remote_signer_address')"
           class="w-full rounded-[10px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           placeholder="bunker:// or NIP-05 signer"
           autocomplete="off"
@@ -274,7 +274,7 @@ onMounted(() => {
         />
         <YButton
           type="submit"
-          text="Connect remote signer"
+          :text="t('nostr.connect_remote_signer')"
           variant="secondary"
           block
           :disabled="busy || !bunker.trim()"
@@ -297,7 +297,7 @@ onMounted(() => {
             <input
               id="nostr-nsec"
               v-model="nsec"
-              aria-label="Private key"
+              :aria-label="t('nostr.private_key')"
               type="password"
               class="w-full rounded-[10px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
               :placeholder="t('nostr.nsec_placeholder')"
@@ -332,7 +332,7 @@ onMounted(() => {
     </section>
 
     <p class="absolute bottom-5 px-5 text-center text-xs text-portal-muted">
-      Sign in with a Nostr identity you control.
+      {{ t('nostr.footer') }}
     </p>
   </main>
 </template>

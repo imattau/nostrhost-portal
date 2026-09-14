@@ -47,7 +47,11 @@ export function useApi<T>(
           if (!(settings.value.public && route.meta.public)) {
             navigateTo('/login')
           }
-        } else if (e.statusCode !== 400 && !e.data?.path) {
+        } else if (
+          e.statusCode !== 400 &&
+          e.statusCode !== 404 &&
+          !e.data?.path
+        ) {
           throw createError({
             statusCode: e.statusCode,
             statusMessage: e.message,

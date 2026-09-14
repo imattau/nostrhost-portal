@@ -142,27 +142,6 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
             to="/nostr-account"
           />
         </section>
-
-        <details
-          class="group rounded-2xl border border-portal-border bg-portal-surface p-6"
-        >
-          <summary
-            class="cursor-pointer list-none text-base font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          >
-            <span class="flex items-center justify-between gap-3">
-              {{ t('change_password') }}
-              <YIcon
-                name="chevron-down"
-                class="transition-transform group-open:rotate-180"
-                aria-hidden="true"
-              />
-            </span>
-            <span class="mt-2 block text-sm font-normal text-portal-muted"
-              >For accounts that still use password sign-in.</span
-            >
-          </summary>
-          <UserPasswordForm class="mt-5 border-t border-portal-border pt-5" />
-        </details>
       </aside>
     </div>
   </div>

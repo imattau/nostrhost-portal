@@ -78,7 +78,14 @@
         "nsec_placeholder": "nsec1… or 64-character hex private key",
         "nsec_sign_in": "Sign in with private key",
         "nsec_invalid": "That doesn't look like a valid nsec or hex private key.",
-        "nsec_create_passkey": "Protect this key with a passkey on this device"
+        "nsec_create_passkey": "Protect this key with a passkey on this device",
+        "tagline": "Private cloud hub",
+        "footer": "Sign in with a Nostr identity you control.",
+        "use_passkey": "Use passkey",
+        "or_remote_signer": "Or connect a remote signer",
+        "remote_signer_address": "Remote signer address",
+        "connect_remote_signer": "Connect remote signer",
+        "private_key": "Private key"
     },
     "nostr_account": {
         "title": "Nostr identity",
