@@ -16,6 +16,7 @@ import {
   type NostrSigner,
   type NostrWindow,
 } from '@/composables/nostrSigner'
+import { useAsyncAction, useStatus } from '@/composables/asyncAction'
 
 definePageMeta({
   public: false,
@@ -43,8 +44,8 @@ const username = ref<string | null>(null)
 const allowLinking = ref(true)
 const identities = ref<Identity[]>([])
 const loading = ref(true)
-const status = ref<{ text: string; kind: 'success' | 'error' } | null>(null)
-const busy = ref(false)
+const { status, setStatus } = useStatus()
+const { busy, run } = useAsyncAction()
 
 const linkMode = ref<'add' | 'replace'>('replace')
 const identityLabel = ref('')
@@ -91,10 +92,6 @@ const signerLabel = (type: string) =>
     nip46: t('nostr_account.signer_nip46'),
     passkey: t('nostr_account.signer_passkey'),
   })[type] || t('nostr_account.signer_unknown')
-
-function setStatus(text: string, kind: 'success' | 'error' = 'success') {
-  status.value = { text, kind }
-}
 
 function refreshSaved() {
   const ui = (window as NostrWindow).NostrConnectUI
@@ -207,16 +204,17 @@ async function performLink(
   ) => Promise<Record<string, unknown>>,
   signerType: string,
 ) {
-  busy.value = true
-  status.value = null
   qrOpen.value = false
-  try {
-    await linkWithSigner({ signEvent: signEventFn }, signerType)
-  } catch (e: any) {
-    setStatus(e?.data ?? e?.message ?? t('nostr_account.link_failed'), 'error')
-  } finally {
-    busy.value = false
-  }
+  await run(() => linkWithSigner({ signEvent: signEventFn }, signerType), {
+    clear: () => {
+      status.value = null
+    },
+    onError: (e) =>
+      setStatus(
+        e?.data ?? e?.message ?? t('nostr_account.link_failed'),
+        'error',
+      ),
+  })
 }
 
 async function linkWithNip07() {
@@ -234,19 +232,25 @@ async function linkWithNip07() {
 async function linkWithBunker() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui || !bunkerInput.value.trim()) return
-  busy.value = true
-  status.value = null
-  try {
-    const label = identityLabel.value.trim() || null
-    const signer = await ui.connectViaBunkerUri(bunkerInput.value.trim(), label)
-    await linkWithSigner(signer, 'nip46')
-    refreshSaved()
-    await registerSignerSession(signer, label)
-  } catch (e: any) {
-    setStatus(e?.message ?? t('nostr_account.link_failed'), 'error')
-  } finally {
-    busy.value = false
-  }
+  await run(
+    async () => {
+      const label = identityLabel.value.trim() || null
+      const signer = await ui.connectViaBunkerUri(
+        bunkerInput.value.trim(),
+        label,
+      )
+      await linkWithSigner(signer, 'nip46')
+      refreshSaved()
+      await registerSignerSession(signer, label)
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('nostr_account.link_failed'), 'error'),
+    },
+  )
 }
 
 let qrAbort: AbortController | null = null
@@ -258,31 +262,37 @@ async function linkWithQr() {
   qrOpen.value = true
   qrDataUrl.value = ''
   qrUri.value = ''
-  busy.value = true
-  status.value = null
-  try {
-    const label = identityLabel.value.trim() || null
-    const signer = await ui.connectViaQr(
-      (uri, dataUrl) => {
-        qrUri.value = uri
-        qrDataUrl.value = dataUrl
+  await run(
+    async () => {
+      const label = identityLabel.value.trim() || null
+      const signer = await ui.connectViaQr(
+        (uri, dataUrl) => {
+          qrUri.value = uri
+          qrDataUrl.value = dataUrl
+        },
+        qrAbort!.signal,
+        label,
+      )
+      qrOpen.value = false
+      await linkWithSigner(signer, 'nip46')
+      refreshSaved()
+      await registerSignerSession(signer, label)
+    },
+    {
+      clear: () => {
+        status.value = null
       },
-      qrAbort.signal,
-      label,
-    )
-    qrOpen.value = false
-    await linkWithSigner(signer, 'nip46')
-    refreshSaved()
-    await registerSignerSession(signer, label)
-  } catch (e: any) {
-    if (!qrAbort.signal.aborted) {
-      setStatus(e?.message ?? t('nostr_account.qr_timeout'), 'error')
-    }
-  } finally {
-    qrOpen.value = false
-    busy.value = false
-    qrAbort = null
-  }
+      onError: (e) => {
+        if (!qrAbort?.signal.aborted) {
+          setStatus(e?.message ?? t('nostr_account.qr_timeout'), 'error')
+        }
+      },
+      onFinally: () => {
+        qrOpen.value = false
+        qrAbort = null
+      },
+    },
+  )
 }
 
 function cancelQr() {
@@ -316,27 +326,33 @@ async function useGeneratedKey() {
 }
 
 async function usePasskey() {
-  busy.value = true
-  status.value = null
-  try {
-    let identity
-    if (hasStoredPasskeyIdentity()) {
-      identity = await unlockPasskeyIdentity()
-    } else if (generated.value) {
-      identity = await importPasskeyIdentityFromNsec(
-        generated.value.nsec,
-        passkeyOpts(),
+  await run(
+    async () => {
+      let identity
+      if (hasStoredPasskeyIdentity()) {
+        identity = await unlockPasskeyIdentity()
+      } else if (generated.value) {
+        identity = await importPasskeyIdentityFromNsec(
+          generated.value.nsec,
+          passkeyOpts(),
+        )
+      } else {
+        identity = await registerPasskeyIdentity(passkeyOpts())
+      }
+      await linkWithSigner(
+        buildPasskeySignerShim(identity.secretKey),
+        'passkey',
       )
-    } else {
-      identity = await registerPasskeyIdentity(passkeyOpts())
-    }
-    await linkWithSigner(buildPasskeySignerShim(identity.secretKey), 'passkey')
-    refreshSaved()
-  } catch (e: any) {
-    setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
-  } finally {
-    busy.value = false
-  }
+      refreshSaved()
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error'),
+    },
+  )
 }
 
 async function revealRecovery() {
@@ -367,21 +383,29 @@ const restoreNsec = ref('')
 
 async function restorePasskey() {
   if (hasPasskey.value || !restoreNsec.value.trim()) return
-  busy.value = true
-  status.value = null
-  try {
-    const identity = await importPasskeyIdentityFromNsec(
-      restoreNsec.value.trim(),
-      passkeyOpts(),
-    )
-    await linkWithSigner(buildPasskeySignerShim(identity.secretKey), 'passkey')
-    refreshSaved()
-  } catch (e: any) {
-    setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error')
-  } finally {
-    restoreNsec.value = ''
-    busy.value = false
-  }
+  await run(
+    async () => {
+      const identity = await importPasskeyIdentityFromNsec(
+        restoreNsec.value.trim(),
+        passkeyOpts(),
+      )
+      await linkWithSigner(
+        buildPasskeySignerShim(identity.secretKey),
+        'passkey',
+      )
+      refreshSaved()
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('nostr_account.passkey_failed'), 'error'),
+      onFinally: () => {
+        restoreNsec.value = ''
+      },
+    },
+  )
 }
 
 function forgetPasskey() {
@@ -589,8 +613,8 @@ onMounted(async () => {
           </label>
           <input
             id="nostr-account-label"
-            aria-label="Identity label"
             v-model="identityLabel"
+            aria-label="Identity label"
             class="portal-account-input"
             :placeholder="t('nostr_account.label_placeholder')"
             autocomplete="off"

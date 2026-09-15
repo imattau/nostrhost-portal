@@ -15,6 +15,7 @@ import {
   type NostrSigner,
   type NostrWindow,
 } from '@/composables/nostrSigner'
+import { useAsyncAction } from '@/composables/asyncAction'
 
 definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
@@ -30,7 +31,13 @@ const isLoggedIn = useIsLoggedIn()
 const redirectUrl = useRedirectUrl()
 const queryMsg = useQueryMsg()
 const error = ref<string | null>(null)
-const busy = ref(false)
+const { busy, run } = useAsyncAction()
+const clearError = () => {
+  error.value = null
+}
+const reportLoginError = (e: any) => {
+  error.value = e?.message ?? t('nostr.login_failed')
+}
 const bunker = ref('')
 const nsec = ref('')
 const createPasskey = ref(false)
@@ -54,7 +61,6 @@ async function signInWithSigner(signer: NostrSigner) {
 }
 
 async function signInWithNostr() {
-  error.value = null
   let signer: NostrSigner
   try {
     signer = connectNip07Signer()
@@ -65,41 +71,31 @@ async function signInWithNostr() {
         : t('nostr.login_failed')
     return
   }
-  busy.value = true
-  try {
-    await signInWithSigner(signer)
-  } catch (e: any) {
-    error.value = e?.message ?? t('nostr.login_failed')
-  } finally {
-    busy.value = false
-  }
+  await run(() => signInWithSigner(signer), {
+    clear: clearError,
+    onError: reportLoginError,
+  })
 }
 
 async function signInWithBunker() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui || !bunker.value.trim()) return
-  busy.value = true
-  error.value = null
-  try {
-    await signInWithSigner(await ui.connectViaBunkerUri(bunker.value.trim()))
-  } catch (e: any) {
-    error.value = e?.message ?? t('nostr.login_failed')
-  } finally {
-    busy.value = false
-  }
+  await run(
+    async () => {
+      await signInWithSigner(await ui.connectViaBunkerUri(bunker.value.trim()))
+    },
+    { clear: clearError, onError: reportLoginError },
+  )
 }
 
 async function signInWithPasskey() {
-  busy.value = true
-  error.value = null
-  try {
-    const identity = await unlockPasskeyIdentity()
-    await signInWithSigner(buildPasskeySignerShim(identity.secretKey))
-  } catch (e: any) {
-    error.value = e?.message ?? t('nostr.login_failed')
-  } finally {
-    busy.value = false
-  }
+  await run(
+    async () => {
+      const identity = await unlockPasskeyIdentity()
+      await signInWithSigner(buildPasskeySignerShim(identity.secretKey))
+    },
+    { clear: clearError, onError: reportLoginError },
+  )
 }
 
 function decodeNsec(input: string): Uint8Array {
@@ -115,32 +111,36 @@ function decodeNsec(input: string): Uint8Array {
 }
 
 async function signInWithNsec() {
-  busy.value = true
-  error.value = null
   let secretKey: Uint8Array | null = null
-  try {
-    // Validate locally before optionally handing the raw nsec to the
-    // passkey enrollment flow below - it does its own parsing, but failing
-    // fast here keeps the error message consistent between the two paths.
-    secretKey = decodeNsec(nsec.value)
-    if (createPasskey.value) {
-      const identity = await importPasskeyIdentityFromNsec(nsec.value.trim(), {
-        rpName: 'NostrHost Identity',
-        userName: 'nostr-identity',
-        displayName: 'NostrHost Identity',
-      })
-      secretKey.fill(0)
-      secretKey = identity.secretKey
-    }
-    await signInWithSigner(buildPasskeySignerShim(secretKey))
-    nsec.value = ''
-    createPasskey.value = false
-  } catch (e: any) {
-    error.value = e?.message ?? t('nostr.login_failed')
-  } finally {
-    secretKey?.fill(0)
-    busy.value = false
-  }
+  await run(
+    async () => {
+      // Validate locally before optionally handing the raw nsec to the
+      // passkey enrollment flow below - it does its own parsing, but
+      // failing fast here keeps the error message consistent between the
+      // two paths.
+      secretKey = decodeNsec(nsec.value)
+      if (createPasskey.value) {
+        const identity = await importPasskeyIdentityFromNsec(
+          nsec.value.trim(),
+          {
+            rpName: 'NostrHost Identity',
+            userName: 'nostr-identity',
+            displayName: 'NostrHost Identity',
+          },
+        )
+        secretKey.fill(0)
+        secretKey = identity.secretKey
+      }
+      await signInWithSigner(buildPasskeySignerShim(secretKey))
+      nsec.value = ''
+      createPasskey.value = false
+    },
+    {
+      clear: clearError,
+      onError: reportLoginError,
+      onFinally: () => secretKey?.fill(0),
+    },
+  )
 }
 
 onMounted(() => {

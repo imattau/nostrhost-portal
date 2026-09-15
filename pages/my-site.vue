@@ -20,6 +20,7 @@ import {
   type NostrSigner,
   type NostrWindow,
 } from '@/composables/nostrSigner'
+import { useAsyncAction, useStatus } from '@/composables/asyncAction'
 
 definePageMeta({ public: false })
 
@@ -66,11 +67,10 @@ const DEFAULT_SERVERS = 'https://blossom.primal.net, https://blossom.band'
 
 const signer = ref<NostrSigner | null>(null)
 const signerPubkey = ref('')
-const signerBusy = ref(false)
-const status = ref<{
-  text: string
-  kind: 'success' | 'error' | 'warning'
-} | null>(null)
+const { status, setStatus } = useStatus()
+const { busy: signerBusy, run: runSignerAction } = useAsyncAction()
+const { busy: building, run: runBuild } = useAsyncAction()
+const { busy: publishing, run: runPublish } = useAsyncAction()
 const identities = ref<Identity[]>([])
 const savedSignerAvailable = ref(false)
 const passkeyAvailable = ref(false)
@@ -86,8 +86,6 @@ const dTag = ref('')
 const serversInput = ref(DEFAULT_SERVERS)
 
 const plan = ref<NsitePlan | null>(null)
-const building = ref(false)
-const publishing = ref(false)
 const uploadProgress = ref('')
 
 const sites = ref<Record<string, unknown>[]>([])
@@ -115,13 +113,6 @@ const linkedPubkey = computed(() =>
   identities.value.some((identity) => identity.pubkey === signerPubkey.value),
 )
 
-function setStatus(
-  text: string,
-  kind: 'success' | 'error' | 'warning' = 'success',
-) {
-  status.value = { text, kind }
-}
-
 async function signerPublicKey(s: NostrSigner): Promise<string> {
   if (typeof s.getPublicKey === 'function') return s.getPublicKey()
   const event = await s.signEvent({
@@ -134,17 +125,19 @@ async function signerPublicKey(s: NostrSigner): Promise<string> {
 }
 
 async function useSigner(s: NostrSigner) {
-  signerBusy.value = true
-  status.value = null
-  try {
-    signer.value = s
-    signerPubkey.value = await signerPublicKey(s)
-    await loadSites()
-  } catch (e: any) {
-    setStatus(e?.message ?? String(e), 'error')
-  } finally {
-    signerBusy.value = false
-  }
+  await runSignerAction(
+    async () => {
+      signer.value = s
+      signerPubkey.value = await signerPublicKey(s)
+      await loadSites()
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) => setStatus(e?.message ?? String(e), 'error'),
+    },
+  )
 }
 
 async function connectExtension() {
@@ -162,44 +155,53 @@ async function connectExtension() {
 async function connectBunker() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui || !bunkerInput.value.trim()) return
-  signerBusy.value = true
-  status.value = null
-  try {
-    const s = await ui.connectViaBunkerUri(bunkerInput.value.trim())
-    await useSigner(s)
-  } catch (e: any) {
-    setStatus(e?.message ?? t('my_site.connect_failed'), 'error')
-  } finally {
-    signerBusy.value = false
-  }
+  await runSignerAction(
+    async () => {
+      const s = await ui.connectViaBunkerUri(bunkerInput.value.trim())
+      await useSigner(s)
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('my_site.connect_failed'), 'error'),
+    },
+  )
 }
 
 async function connectSaved() {
   const ui = (window as NostrWindow).NostrConnectUI
   if (!ui?.hasSaved()) return
-  signerBusy.value = true
-  status.value = null
-  try {
-    const s = await ui.reconnectSaved()
-    if (s) await useSigner(s)
-  } catch (e: any) {
-    setStatus(e?.message ?? t('my_site.connect_failed'), 'error')
-  } finally {
-    signerBusy.value = false
-  }
+  await runSignerAction(
+    async () => {
+      const s = await ui.reconnectSaved()
+      if (s) await useSigner(s)
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('my_site.connect_failed'), 'error'),
+    },
+  )
 }
 
 async function connectPasskey() {
-  signerBusy.value = true
-  status.value = null
-  try {
-    const identity = await unlockPasskeyIdentity()
-    await useSigner(buildPasskeySignerShim(identity.secretKey))
-  } catch (e: any) {
-    setStatus(e?.message ?? t('my_site.connect_failed'), 'error')
-  } finally {
-    signerBusy.value = false
-  }
+  await runSignerAction(
+    async () => {
+      const identity = await unlockPasskeyIdentity()
+      await useSigner(buildPasskeySignerShim(identity.secretKey))
+    },
+    {
+      clear: () => {
+        status.value = null
+      },
+      onError: (e) =>
+        setStatus(e?.message ?? t('my_site.connect_failed'), 'error'),
+    },
+  )
 }
 
 async function loadSites() {
@@ -237,98 +239,109 @@ async function onFilesChosen(event: Event) {
 
 async function buildPlan() {
   if (!signerPubkey.value || !inventory.value?.length) return
-  building.value = true
-  status.value = null
-  plan.value = null
-  try {
-    const items = inventory.value.map((item) => ({
-      path: item.path,
-      sha256: item.sha256,
-    }))
-    const resp = await $fetch<{ plan: NsitePlan }>(
-      `${nativeApi()}/nsite/publish/plan`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        body: {
-          pubkey: signerPubkey.value,
-          kind: Number(kind.value),
-          d: kind.value === String(KIND_NAMED) ? dTag.value.trim() : '',
-          items,
-          servers: servers.value,
+  await runBuild(
+    async () => {
+      const items = inventory.value!.map((item) => ({
+        path: item.path,
+        sha256: item.sha256,
+      }))
+      const resp = await $fetch<{ plan: NsitePlan }>(
+        `${nativeApi()}/nsite/publish/plan`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          body: {
+            pubkey: signerPubkey.value,
+            kind: Number(kind.value),
+            d: kind.value === String(KIND_NAMED) ? dTag.value.trim() : '',
+            items,
+            servers: servers.value,
+          },
         },
+      )
+      plan.value = resp.plan
+      setStatus(t('my_site.plan_ready'))
+    },
+    {
+      clear: () => {
+        status.value = null
+        plan.value = null
       },
-    )
-    plan.value = resp.plan
-    setStatus(t('my_site.plan_ready'))
-  } catch (e: any) {
-    setStatus(e?.data?.error ?? e?.message ?? t('my_site.plan_failed'), 'error')
-  } finally {
-    building.value = false
-  }
+      onError: (e) =>
+        setStatus(
+          e?.data?.error ?? e?.message ?? t('my_site.plan_failed'),
+          'error',
+        ),
+    },
+  )
 }
 
 async function publish() {
   if (!signer.value || !plan.value || !inventory.value) return
-  publishing.value = true
-  status.value = null
-  try {
-    const p = plan.value
-    const blobBytes = (path: string) => {
-      const file = fileMap.value.get(path)
-      return file ? blobBytesOfFile(file) : null
-    }
-    for (const server of p.servers) {
-      uploadProgress.value = server
-      const result = await uploadToBlossom(server, p.items, blobBytes, {
-        pubkey: signerPubkey.value,
-        signEvent: (event) => signer.value!.signEvent(event) as any,
+  await runPublish(
+    async () => {
+      const p = plan.value!
+      const blobBytes = (path: string) => {
+        const file = fileMap.value.get(path)
+        return file ? blobBytesOfFile(file) : null
+      }
+      for (const server of p.servers) {
+        uploadProgress.value = server
+        const result = await uploadToBlossom(server, p.items, blobBytes, {
+          pubkey: signerPubkey.value,
+          signEvent: (event) => signer.value!.signEvent(event) as any,
+        })
+        if (!result.ok) {
+          const first = Object.values(result.errors)[0]
+          throw new NsiteError(
+            `blob upload to ${server} failed${first ? `: ${first}` : ''}`,
+          )
+        }
+      }
+      uploadProgress.value = ''
+      const unsigned = p.unsigned_event
+      const signed = (await signer.value!.signEvent({
+        ...unsigned,
+        created_at: Math.floor(Date.now() / 1000),
+      })) as any
+      const out = await $fetch<{
+        ok: boolean
+        reason?: string
+        error?: string
+      }>(`${nativeApi()}/nsite/publish`, {
+        method: 'POST',
+        credentials: 'include',
+        body: {
+          event: signed,
+          plan_sha256: p.plan_sha256,
+          relays: p.relays,
+        },
       })
-      if (!result.ok) {
-        const first = Object.values(result.errors)[0]
+      if (!out.ok) {
         throw new NsiteError(
-          `blob upload to ${server} failed${first ? `: ${first}` : ''}`,
+          out.reason || out.error || t('my_site.publish_rejected'),
         )
       }
-    }
-    uploadProgress.value = ''
-    const unsigned = p.unsigned_event
-    const signed = (await signer.value.signEvent({
-      ...unsigned,
-      created_at: Math.floor(Date.now() / 1000),
-    })) as any
-    const out = await $fetch<{
-      ok: boolean
-      reason?: string
-      error?: string
-    }>(`${nativeApi()}/nsite/publish`, {
-      method: 'POST',
-      credentials: 'include',
-      body: {
-        event: signed,
-        plan_sha256: p.plan_sha256,
-        relays: p.relays,
+      setStatus(t('my_site.published'))
+      plan.value = null
+      inventory.value = null
+      files.value = []
+      await loadSites()
+    },
+    {
+      clear: () => {
+        status.value = null
       },
-    })
-    if (!out.ok) {
-      throw new NsiteError(
-        out.reason || out.error || t('my_site.publish_rejected'),
-      )
-    }
-    setStatus(t('my_site.published'))
-    plan.value = null
-    inventory.value = null
-    files.value = []
-    await loadSites()
-  } catch (e: any) {
-    setStatus(
-      e?.data?.error ?? e?.message ?? t('my_site.publish_failed'),
-      'error',
-    )
-  } finally {
-    publishing.value = false
-    uploadProgress.value = ''
-  }
+      onError: (e) =>
+        setStatus(
+          e?.data?.error ?? e?.message ?? t('my_site.publish_failed'),
+          'error',
+        ),
+      onFinally: () => {
+        uploadProgress.value = ''
+      },
+    },
+  )
 }
 
 onMounted(async () => {
