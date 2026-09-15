@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { sanitizeHtml } from '~/utils/sanitize'
+
 definePageMeta({
   public: true,
 })
@@ -141,7 +143,7 @@ const tileClasses = computed(() => {
                 app.description && settings.portal_tile_theme === 'descriptive'
               "
               class="app-description mt-2"
-              v-html="app.description"
+              v-html="sanitizeHtml(app.description)"
             />
           </div>
         </li>

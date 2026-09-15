@@ -1,20 +1,28 @@
 <script setup lang="ts">
 let customLogo: Settings['portal_logo']
+let svgUrl = ''
 
 try {
   const settings = await useSettings()
   customLogo = settings.value.portal_logo
+  if (customLogo?.is === 'svg' && customLogo.src) {
+    // Render the SVG through an <img> (via a Blob URL) instead of injecting
+    // it as HTML: an SVG served as an image cannot execute embedded scripts,
+    // whereas `v-html` injection of a crafted SVG can. The Blob URL is not
+    // revoked since the logo is a static, long-lived element.
+    svgUrl = URL.createObjectURL(new Blob([customLogo.src], { type: 'image/svg+xml' }))
+  }
 } catch {
   // If `yunohost-portal-api` is down we can't get settings
 }
 </script>
 
 <template>
-  <div
+  <img
     v-if="customLogo?.is === 'svg'"
+    :src="svgUrl"
+    alt=""
     aria-hidden="true"
-    class="svg-div"
-    v-html="customLogo.src"
   />
   <img
     v-else-if="customLogo?.is === 'img'"

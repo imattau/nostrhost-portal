@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { sanitizeHtml } from '~/utils/sanitize'
+
 defineProps<{
   content: string
 }>()
 </script>
 
 <template>
-  <section class="intro" v-html="content" />
+  <section class="intro" v-html="sanitizeHtml(content)" />
 </template>
 
 <style>
