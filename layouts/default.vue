@@ -21,6 +21,7 @@ const footerLinks = computed(() => {
   }[] = [
     { text: t('footerlink_edit'), to: '/edit' },
     { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
+    { text: t('footerlink_my_site'), to: '/my-site' },
   ]
   // The admin console is same-origin and only meaningful for admins; the
   // console itself refuses non-admins, so gate the link on the account flag.
