@@ -18,7 +18,10 @@
 window.NostrConnectUI = (function () {
   "use strict";
 
-  var BUNKER_STORAGE_KEY = "nostrAuthSavedSigner";
+  // Legacy single-slot key (pre-multi-session). Migrated into
+  // BUNKER_LIST_STORAGE_KEY on first load and then left alone.
+  var LEGACY_BUNKER_STORAGE_KEY = "nostrAuthSavedSigner";
+  var BUNKER_LIST_STORAGE_KEY = "nostrAuthSavedSigners";
   var LOCAL_KEY_STORAGE_KEY = "nostrAuthLocalKey";
   // Well-known public relays that support NIP-46 traffic, used only for
   // the nostrconnect:// (QR) flow, where this page - not the user's
@@ -44,41 +47,122 @@ window.NostrConnectUI = (function () {
   }
 
   // --- NIP-46 (bunker:// / nostrconnect://) ---------------------------
+  //
+  // Multiple bunker connections can be saved at once (one per remote
+  // signer pubkey), each identified by a server-visible sessionId. The
+  // client secret key never leaves this array/localStorage - the server
+  // (see nostr-account.vue's session sync) is only ever told the remote
+  // signer's pubkey, relays and a label, for the account page's "connected
+  // signers" list. A migration step folds the old single-slot key in once.
 
-  function loadSavedBunker() {
+  function genSessionId() {
+    return bytesToHex(window.NostrConnectVendor.generateSecretKey()).slice(0, 32);
+  }
+
+  function loadSavedList() {
     try {
-      var raw = localStorage.getItem(BUNKER_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
+      var raw = localStorage.getItem(BUNKER_LIST_STORAGE_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
     } catch (e) {
-      return null;
+      return [];
     }
   }
 
-  function saveBunker(clientSecretKey, bunkerPointer) {
+  function saveSavedList(list) {
     try {
-      localStorage.setItem(
-        BUNKER_STORAGE_KEY,
-        JSON.stringify({ clientSecretKeyHex: bytesToHex(clientSecretKey), bunkerPointer: bunkerPointer })
-      );
+      localStorage.setItem(BUNKER_LIST_STORAGE_KEY, JSON.stringify(list));
     } catch (e) {
       // Storage unavailable/full - not fatal, just no "reconnect" convenience next time.
     }
   }
 
-  function clearSaved() {
+  function migrateLegacyIfNeeded() {
+    var already = localStorage.getItem(BUNKER_LIST_STORAGE_KEY);
+    if (already !== null) return;
     try {
-      localStorage.removeItem(BUNKER_STORAGE_KEY);
+      var raw = localStorage.getItem(LEGACY_BUNKER_STORAGE_KEY);
+      if (!raw) {
+        saveSavedList([]);
+        return;
+      }
+      var legacy = JSON.parse(raw);
+      saveSavedList([
+        {
+          sessionId: genSessionId(),
+          clientSecretKeyHex: legacy.clientSecretKeyHex,
+          bunkerPointer: legacy.bunkerPointer,
+          label: null,
+          connectedAt: Date.now(),
+        },
+      ]);
+      localStorage.removeItem(LEGACY_BUNKER_STORAGE_KEY);
+    } catch (e) {
+      saveSavedList([]);
+    }
+  }
+
+  function loadSavedBunker() {
+    migrateLegacyIfNeeded();
+    var list = loadSavedList();
+    return list.length ? list[list.length - 1] : null;
+  }
+
+  // Adds or updates (by remote signer pubkey) a saved session; returns it.
+  function saveBunker(clientSecretKey, bunkerPointer, label) {
+    migrateLegacyIfNeeded();
+    var list = loadSavedList();
+    var entry = {
+      sessionId: genSessionId(),
+      clientSecretKeyHex: bytesToHex(clientSecretKey),
+      bunkerPointer: bunkerPointer,
+      label: label || null,
+      connectedAt: Date.now(),
+    };
+    var existingIdx = -1;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].bunkerPointer.pubkey === bunkerPointer.pubkey) {
+        existingIdx = i;
+        break;
+      }
+    }
+    if (existingIdx >= 0) {
+      entry.sessionId = list[existingIdx].sessionId; // keep the id the server already knows
+      list[existingIdx] = entry;
+    } else {
+      list.push(entry);
+    }
+    saveSavedList(list);
+    return entry;
+  }
+
+  function clearSaved() {
+    saveSavedList([]);
+    try {
+      localStorage.removeItem(LEGACY_BUNKER_STORAGE_KEY);
     } catch (e) {
       // ignore
     }
   }
 
+  function forgetSession(sessionId) {
+    migrateLegacyIfNeeded();
+    saveSavedList(
+      loadSavedList().filter(function (s) {
+        return s.sessionId !== sessionId;
+      })
+    );
+  }
+
   function hasSaved() {
-    return !!loadSavedBunker();
+    migrateLegacyIfNeeded();
+    return loadSavedList().length > 0;
   }
 
   // For a "connected via remote signer" settings panel: who/where, without
-  // exposing the client secret key itself.
+  // exposing the client secret key itself. Kept for backward compatibility
+  // (returns the most recently connected session); listSavedSessions()
+  // below returns all of them.
   function getSavedInfo() {
     var saved = loadSavedBunker();
     if (!saved) return null;
@@ -89,7 +173,26 @@ window.NostrConnectUI = (function () {
     };
   }
 
-  async function connectViaBunkerUri(bunkerUriOrNip05) {
+  // Every saved session, newest first, without any secret key material.
+  function listSavedSessions() {
+    migrateLegacyIfNeeded();
+    var vendor = window.NostrConnectVendor;
+    return loadSavedList()
+      .slice()
+      .reverse()
+      .map(function (s) {
+        return {
+          sessionId: s.sessionId,
+          relays: s.bunkerPointer.relays,
+          remoteNpub: vendor.npubEncode(s.bunkerPointer.pubkey),
+          remotePubkey: s.bunkerPointer.pubkey,
+          label: s.label,
+          connectedAt: s.connectedAt,
+        };
+      });
+  }
+
+  async function connectViaBunkerUri(bunkerUriOrNip05, label) {
     var vendor = window.NostrConnectVendor;
     var bp = await vendor.parseBunkerInput(bunkerUriOrNip05);
     if (!bp) {
@@ -98,11 +201,12 @@ window.NostrConnectUI = (function () {
     var clientSecretKey = vendor.generateSecretKey();
     var signer = vendor.BunkerSigner.fromBunker(clientSecretKey, bp);
     await signer.connect();
-    saveBunker(clientSecretKey, bp);
+    var entry = saveBunker(clientSecretKey, bp, label);
+    signer.sessionId = entry.sessionId;
     return signer;
   }
 
-  async function connectViaQr(onUriReady, abortSignal) {
+  async function connectViaQr(onUriReady, abortSignal, label) {
     var vendor = window.NostrConnectVendor;
     var clientSecretKey = vendor.generateSecretKey();
     var clientPubkey = vendor.getPublicKey(clientSecretKey);
@@ -125,7 +229,8 @@ window.NostrConnectUI = (function () {
       {},
       abortSignal || CONNECT_TIMEOUT_MS
     );
-    saveBunker(clientSecretKey, signer.bp);
+    var entry = saveBunker(clientSecretKey, signer.bp, label);
+    signer.sessionId = entry.sessionId;
     return signer;
   }
 
@@ -136,6 +241,20 @@ window.NostrConnectUI = (function () {
     var clientSecretKey = hexToBytes(saved.clientSecretKeyHex);
     var signer = vendor.BunkerSigner.fromBunker(clientSecretKey, saved.bunkerPointer);
     await signer.connect();
+    signer.sessionId = saved.sessionId;
+    return signer;
+  }
+
+  async function reconnectSession(sessionId) {
+    var saved = loadSavedList().filter(function (s) {
+      return s.sessionId === sessionId;
+    })[0];
+    if (!saved) return null;
+    var vendor = window.NostrConnectVendor;
+    var clientSecretKey = hexToBytes(saved.clientSecretKeyHex);
+    var signer = vendor.BunkerSigner.fromBunker(clientSecretKey, saved.bunkerPointer);
+    await signer.connect();
+    signer.sessionId = saved.sessionId;
     return signer;
   }
 
@@ -219,7 +338,10 @@ window.NostrConnectUI = (function () {
   return {
     hasSaved: hasSaved,
     getSavedInfo: getSavedInfo,
+    listSavedSessions: listSavedSessions,
     reconnectSaved: reconnectSaved,
+    reconnectSession: reconnectSession,
+    forgetSession: forgetSession,
     connectViaBunkerUri: connectViaBunkerUri,
     connectViaQr: connectViaQr,
     clearSaved: clearSaved,

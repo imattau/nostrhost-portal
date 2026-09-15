@@ -38,12 +38,25 @@ type NostrWindow = Window & {
   NostrConnectUI?: {
     hasSaved(): boolean
     getSavedInfo(): { relays: string[]; remoteNpub: string } | null
+    listSavedSessions(): Array<{
+      sessionId: string
+      relays: string[]
+      remoteNpub: string
+      remotePubkey: string
+      label: string | null
+      connectedAt: number
+    }>
     reconnectSaved(): Promise<NostrSigner | null>
-    connectViaBunkerUri(value: string): Promise<NostrSigner>
+    forgetSession(sessionId: string): void
+    connectViaBunkerUri(
+      value: string,
+      label?: string | null,
+    ): Promise<NostrSigner & { sessionId?: string }>
     connectViaQr(
       onUriReady: (uri: string, dataUrl: string) => void,
       signal: AbortSignal,
-    ): Promise<NostrSigner>
+      label?: string | null,
+    ): Promise<NostrSigner & { sessionId?: string }>
     clearSaved(): void
     clearLocalKey(): void
     clearAllSaved(): void
@@ -94,6 +107,18 @@ const rememberKey = ref(false)
 
 const savedSigners = ref<{ relays: string[]; remoteNpub: string } | null>(null)
 const hasLocalKey = ref(false)
+
+interface SignerSession {
+  session_id: string
+  remote_pubkey: string
+  remote_npub: string
+  relays: string[]
+  label: string | null
+  connected_at: number
+  last_used: number | null
+}
+
+const signerSessions = ref<SignerSession[]>([])
 const hasPasskey = ref(false)
 const recoveryNsec = ref('')
 
@@ -123,6 +148,66 @@ function refreshSaved() {
   if (!hasPasskey.value) recoveryNsec.value = ''
 }
 
+async function loadSignerSessions() {
+  try {
+    const resp = await $fetch<{ sessions: SignerSession[] }>(
+      `${api()}/nostr/signers`,
+      { credentials: 'include' },
+    )
+    signerSessions.value = resp.sessions
+  } catch {
+    // Best-effort: the account page still works from the local list alone.
+    signerSessions.value = []
+  }
+}
+
+// Tells the server about a bunker the browser just connected to, purely so
+// this page can list it. The server never learns the client secret key.
+async function registerSignerSession(
+  signer: { sessionId?: string },
+  label: string | null,
+) {
+  const ui = (window as NostrWindow).NostrConnectUI
+  if (!ui || !signer.sessionId) return
+  const info = ui
+    .listSavedSessions()
+    .find((s) => s.sessionId === signer.sessionId)
+  if (!info) return
+  try {
+    await $fetch(`${api()}/nostr/signers`, {
+      method: 'POST',
+      credentials: 'include',
+      body: {
+        session_id: info.sessionId,
+        remote_pubkey: info.remotePubkey,
+        relays: info.relays,
+        label,
+      },
+    })
+  } catch {
+    // Best-effort visibility record - the browser's own saved session is
+    // what actually lets the user sign in again, so a failure here isn't fatal.
+  }
+  await loadSignerSessions()
+}
+
+async function forgetSignerSession(session: SignerSession) {
+  if (!window.confirm(t('nostr_account.signer_forget_confirm'))) return
+  const ui = (window as NostrWindow).NostrConnectUI
+  ui?.forgetSession(session.session_id)
+  try {
+    await $fetch(`${api()}/nostr/signers/revoke`, {
+      method: 'POST',
+      credentials: 'include',
+      body: { session_id: session.session_id },
+    })
+  } catch (e: any) {
+    setStatus(e?.data ?? t('nostr_account.signer_forget_failed'), 'error')
+  }
+  refreshSaved()
+  await loadSignerSessions()
+}
+
 async function load() {
   loading.value = true
   const resp = await $fetch<{
@@ -134,6 +219,7 @@ async function load() {
   allowLinking.value = resp.allow_identity_linking
   identities.value = resp.identities
   refreshSaved()
+  await loadSignerSessions()
   loading.value = false
 }
 
@@ -204,9 +290,11 @@ async function linkWithBunker() {
   busy.value = true
   status.value = null
   try {
-    const signer = await ui.connectViaBunkerUri(bunkerInput.value.trim())
+    const label = identityLabel.value.trim() || null
+    const signer = await ui.connectViaBunkerUri(bunkerInput.value.trim(), label)
     await linkWithSigner(signer, 'nip46')
     refreshSaved()
+    await registerSignerSession(signer, label)
   } catch (e: any) {
     setStatus(e?.message ?? t('nostr_account.link_failed'), 'error')
   } finally {
@@ -226,13 +314,19 @@ async function linkWithQr() {
   busy.value = true
   status.value = null
   try {
-    const signer = await ui.connectViaQr((uri, dataUrl) => {
-      qrUri.value = uri
-      qrDataUrl.value = dataUrl
-    }, qrAbort.signal)
+    const label = identityLabel.value.trim() || null
+    const signer = await ui.connectViaQr(
+      (uri, dataUrl) => {
+        qrUri.value = uri
+        qrDataUrl.value = dataUrl
+      },
+      qrAbort.signal,
+      label,
+    )
     qrOpen.value = false
     await linkWithSigner(signer, 'nip46')
     refreshSaved()
+    await registerSignerSession(signer, label)
   } catch (e: any) {
     if (!qrAbort.signal.aborted) {
       setStatus(e?.message ?? t('nostr_account.qr_timeout'), 'error')
@@ -396,6 +490,7 @@ async function unlinkAll() {
       credentials: 'include',
     })
     ;(window as NostrWindow).NostrConnectUI?.clearAllSaved()
+    signerSessions.value = []
     await Promise.all([load()])
   } catch (e: any) {
     setStatus(e?.data ?? t('nostr_account.unlink_failed'), 'error')
@@ -756,14 +851,57 @@ onMounted(async () => {
       </section>
 
       <section
-        v-if="savedSigners || hasLocalKey"
+        v-if="signerSessions.length || savedSigners || hasLocalKey"
         class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5"
       >
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.saved_signers') }}
         </h2>
+
+        <template v-if="signerSessions.length">
+          <h3 class="text-sm font-semibold">
+            {{ t('nostr_account.connected_signers') }}
+          </h3>
+          <p class="mb-2 mt-1 text-xs text-portal-muted">
+            {{ t('nostr_account.connected_signers_desc') }}
+          </p>
+          <div
+            v-for="session in signerSessions"
+            :key="session.session_id"
+            class="flex flex-wrap items-center justify-between gap-2 border-b border-portal-border py-2 last:border-b-0"
+          >
+            <div class="min-w-0">
+              <p class="text-sm font-semibold">
+                {{ session.label || t('nostr_account.saved_bunker') }}
+              </p>
+              <p class="break-all font-mono text-xs opacity-70">
+                {{ session.remote_npub }}
+              </p>
+              <p class="break-all text-xs opacity-60">
+                {{
+                  t('nostr_account.signer_relays', {
+                    relays: session.relays.join(', '),
+                  })
+                }}
+              </p>
+              <p class="text-xs opacity-60">
+                {{
+                  t('nostr_account.last_used', {
+                    date: formatTimestamp(session.last_used),
+                  })
+                }}
+              </p>
+            </div>
+            <YButton
+              variant="secondary"
+              :text="t('nostr_account.forget')"
+              @click.prevent="forgetSignerSession(session)"
+            />
+          </div>
+        </template>
+
         <div
-          v-if="savedSigners"
+          v-if="savedSigners && !signerSessions.length"
           class="flex items-center justify-between gap-2 py-1"
         >
           <span class="text-sm">
