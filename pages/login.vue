@@ -7,6 +7,14 @@ import {
   buildPasskeySignerShim,
   importPasskeyIdentityFromNsec,
 } from 'nostr-passkey'
+import {
+  connectNip07Signer,
+  signNip98Challenge,
+  useNostrConnectScripts,
+  NostrExtensionMissingError,
+  type NostrSigner,
+  type NostrWindow,
+} from '@/composables/nostrSigner'
 
 definePageMeta({ layout: false, public: true })
 const { t } = useI18n()
@@ -16,13 +24,8 @@ const settingsTitle = computed(() =>
     ? settings.value.portal_title
     : 'NostrHost Service Portal',
 )
-useHead({
-  title: t('login'),
-  script: [
-    { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
-    { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
-  ],
-})
+useHead({ title: t('login') })
+useNostrConnectScripts()
 const isLoggedIn = useIsLoggedIn()
 const redirectUrl = useRedirectUrl()
 const queryMsg = useQueryMsg()
@@ -33,34 +36,11 @@ const nsec = ref('')
 const createPasskey = ref(false)
 const passkeyAvailable = ref(false)
 
-type NostrSigner = {
-  signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-}
-type NostrWindow = Window & {
-  nostr?: {
-    getPublicKey(): Promise<string>
-    signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-  }
-  NostrConnectUI?: { connectViaBunkerUri(value: string): Promise<NostrSigner> }
-}
-
 async function signInWithSigner(signer: NostrSigner) {
-  // Build an absolute portalapi URL: the app's Nuxt baseURL is /nostrhost/sso,
-  // so a relative $fetch would be double-prefixed (…/sso/nostrhost/portalapi/…).
-  const api = `https://${window.location.host}/nostrhost/portalapi`
-  const { challenge } = await $fetch<{ challenge: string }>(
-    `${api}/nostr/challenge`,
-    { credentials: 'include' },
-  )
-  const signed = await signer.signEvent({
-    kind: 22242,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['challenge', challenge],
-      ['domain', window.location.host],
-      ['action', 'nostrhost-login'],
-    ],
-    content: '',
+  const api = useApiEndpoint()
+  const signed = await signNip98Challenge(signer, {
+    challengeUrl: `${api}/nostr/challenge`,
+    action: 'nostrhost-login',
   })
   await $fetch(`${api}/nostr/login`, {
     method: 'POST',
@@ -75,19 +55,19 @@ async function signInWithSigner(signer: NostrSigner) {
 
 async function signInWithNostr() {
   error.value = null
-  const nostr = (window as NostrWindow).nostr
-  if (!nostr) {
-    error.value = t('nostr.extension_missing')
+  let signer: NostrSigner
+  try {
+    signer = connectNip07Signer()
+  } catch (e) {
+    error.value =
+      e instanceof NostrExtensionMissingError
+        ? t('nostr.extension_missing')
+        : t('nostr.login_failed')
     return
   }
   busy.value = true
   try {
-    await signInWithSigner({
-      signEvent: async (event) => {
-        event.pubkey = await nostr.getPublicKey()
-        return nostr.signEvent(event)
-      },
-    })
+    await signInWithSigner(signer)
   } catch (e: any) {
     error.value = e?.message ?? t('nostr.login_failed')
   } finally {

@@ -8,6 +8,14 @@ import {
   exportPasskeyIdentityAsNsec,
   clearPasskeyIdentity,
 } from 'nostr-passkey'
+import {
+  connectNip07Signer,
+  signNip98Challenge,
+  useNostrConnectScripts,
+  NostrExtensionMissingError,
+  type NostrSigner,
+  type NostrWindow,
+} from '@/composables/nostrSigner'
 
 definePageMeta({
   public: false,
@@ -15,62 +23,10 @@ definePageMeta({
 
 const { t } = useI18n()
 
-useHead({
-  title: t('nostr_account.title'),
-  script: [
-    { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
-    { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
-  ],
-})
+useHead({ title: t('nostr_account.title') })
+useNostrConnectScripts()
 
-const api = () => `https://${window.location.host}/nostrhost/portalapi`
-
-type NostrSigner = {
-  signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-  close?(): Promise<void>
-  destroy?(): void
-}
-type NostrWindow = Window & {
-  nostr?: {
-    getPublicKey(): Promise<string>
-    signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-  }
-  NostrConnectUI?: {
-    hasSaved(): boolean
-    getSavedInfo(): { relays: string[]; remoteNpub: string } | null
-    listSavedSessions(): Array<{
-      sessionId: string
-      relays: string[]
-      remoteNpub: string
-      remotePubkey: string
-      label: string | null
-      connectedAt: number
-    }>
-    reconnectSaved(): Promise<NostrSigner | null>
-    forgetSession(sessionId: string): void
-    connectViaBunkerUri(
-      value: string,
-      label?: string | null,
-    ): Promise<NostrSigner & { sessionId?: string }>
-    connectViaQr(
-      onUriReady: (uri: string, dataUrl: string) => void,
-      signal: AbortSignal,
-      label?: string | null,
-    ): Promise<NostrSigner & { sessionId?: string }>
-    clearSaved(): void
-    clearLocalKey(): void
-    clearAllSaved(): void
-    hasLocalKey(): boolean
-    generateLocalKeypair(): {
-      secretKeyHex: string
-      pubkeyHex: string
-      nsec: string
-      npub: string
-    }
-    createLocalSigner(secretKeyHex: string): NostrSigner
-    saveLocalKey(secretKeyHex: string): void
-  }
-}
+const api = () => useApiEndpoint()
 
 interface Identity {
   id: number
@@ -224,19 +180,10 @@ async function load() {
 }
 
 async function linkWithSigner(signer: NostrSigner, signerType: string) {
-  const { challenge } = await $fetch<{ challenge: string }>(
-    `${api()}/nostr/link/challenge`,
-    { method: 'POST', credentials: 'include' },
-  )
-  const signed = await signer.signEvent({
-    kind: 22242,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['challenge', challenge],
-      ['domain', window.location.host],
-      ['action', 'nostrhost-link'],
-    ],
-    content: '',
+  const signed = await signNip98Challenge(signer, {
+    challengeUrl: `${api()}/nostr/link/challenge`,
+    challengeMethod: 'POST',
+    action: 'nostrhost-link',
   })
   await $fetch(`${api()}/nostr/link`, {
     method: 'POST',
@@ -273,15 +220,15 @@ async function performLink(
 }
 
 async function linkWithNip07() {
-  const nostr = (window as NostrWindow).nostr
-  if (!nostr) {
+  let signer: NostrSigner
+  try {
+    signer = connectNip07Signer()
+  } catch (e) {
+    if (!(e instanceof NostrExtensionMissingError)) throw e
     setStatus(t('nostr_account.extension_missing'), 'error')
     return
   }
-  await performLink(async (event) => {
-    event.pubkey = await nostr.getPublicKey()
-    return nostr.signEvent(event)
-  }, 'nip07')
+  await performLink(signer.signEvent, 'nip07')
 }
 
 async function linkWithBunker() {

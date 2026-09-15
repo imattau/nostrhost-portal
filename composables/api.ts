@@ -1,12 +1,16 @@
 import type { FetchError } from 'ofetch'
 
-const useApiEndpoint = () => {
+// `suffix` defaults to the portal API path, but callers that need a
+// different backend on the same host (e.g. the native `/package` API used
+// by my-site.vue's Blossom/nsite endpoints) can override it while still
+// getting the dev-mode `apiIp` override below.
+export const useApiEndpoint = (suffix: string = '/nostrhost/portalapi') => {
   return (
     'https://' +
     (process.dev
       ? useRuntimeConfig().public.apiIp || window.location.host
       : window.location.host) +
-    '/nostrhost/portalapi'
+    suffix
   )
 }
 
