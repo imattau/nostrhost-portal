@@ -13,42 +13,23 @@ import {
   type InventoryItem,
   type ManifestItem,
 } from '@/utils/nsite'
+import {
+  connectNip07Signer,
+  useNostrConnectScripts,
+  NostrExtensionMissingError,
+  type NostrSigner,
+  type NostrWindow,
+} from '@/composables/nostrSigner'
 
 definePageMeta({ public: false })
 
 const { t } = useI18n()
 
-useHead({
-  title: t('my_site.title'),
-  script: [
-    { src: '/nostrhost/sso/nostr/nostr-connect-vendor.js', defer: true },
-    { src: '/nostrhost/sso/nostr/nostr-connect-ui.js', defer: true },
-  ],
-})
+useHead({ title: t('my_site.title') })
+useNostrConnectScripts()
 
-// The portal app's Nuxt baseURL is /nostrhost/sso, so a relative $fetch would
-// be double-prefixed; build absolute URLs like login.vue does.
-const portalApi = () => `https://${window.location.host}/nostrhost/portalapi`
-const nativeApi = () => `https://${window.location.host}/package`
-
-type NostrSigner = {
-  signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-  getPublicKey?(): Promise<string>
-  close?(): Promise<void>
-  destroy?(): void
-}
-type NostrWindow = Window & {
-  nostr?: {
-    getPublicKey(): Promise<string>
-    signEvent(event: Record<string, unknown>): Promise<Record<string, unknown>>
-  }
-  NostrConnectUI?: {
-    hasSaved(): boolean
-    getSavedInfo(): { relays: string[]; remoteNpub: string } | null
-    reconnectSaved(): Promise<NostrSigner | null>
-    connectViaBunkerUri(value: string): Promise<NostrSigner>
-  }
-}
+const portalApi = () => useApiEndpoint()
+const nativeApi = () => useApiEndpoint('/package')
 
 interface Identity {
   id: number
@@ -167,18 +148,15 @@ async function useSigner(s: NostrSigner) {
 }
 
 async function connectExtension() {
-  const nostr = (window as NostrWindow).nostr
-  if (!nostr) {
+  let nip07: NostrSigner
+  try {
+    nip07 = connectNip07Signer()
+  } catch (e) {
+    if (!(e instanceof NostrExtensionMissingError)) throw e
     setStatus(t('my_site.extension_missing'), 'error')
     return
   }
-  await useSigner({
-    signEvent: async (event) => {
-      event.pubkey = await nostr.getPublicKey()
-      return nostr.signEvent(event)
-    },
-    getPublicKey: () => nostr.getPublicKey(),
-  })
+  await useSigner(nip07)
 }
 
 async function connectBunker() {
