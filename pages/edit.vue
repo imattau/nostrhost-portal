@@ -47,7 +47,7 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
   <div class="mx-auto w-full max-w-5xl pb-12">
     <PageTitle :text="$t('footerlink_edit')" class="mb-2" />
     <p class="mb-6 text-sm text-portal-muted">
-      Manage your portal preferences and Nostr sign-in methods.
+      {{ t('edit_intro') }}
     </p>
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -66,7 +66,7 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
                 {{ t('edit_personal_settings') }}
               </h2>
               <p class="mt-1 text-sm text-portal-muted">
-                Update the name shown in your portal.
+                {{ t('edit_personal_desc') }}
               </p>
             </div>
           </div>
@@ -129,14 +129,13 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
           >
             <YIcon name="key-chain" size="1.25rem" aria-hidden="true" />
           </div>
-          <h2 class="text-base font-bold">Nostr identity</h2>
+          <h2 class="text-base font-bold">{{ t('nostr_account.title') }}</h2>
           <p class="mt-2 text-sm leading-6 text-portal-muted">
-            Link and manage browser extensions, remote signers, passkeys, and
-            recovery keys.
+            {{ t('edit_nostr_identity_desc') }}
           </p>
           <YButton
             class="mt-5"
-            text="Manage Nostr identities"
+            :text="t('edit_manage_nostr_identities')"
             variant="secondary"
             block
             to="/nostr-account"

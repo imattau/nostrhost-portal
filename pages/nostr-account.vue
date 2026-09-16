@@ -155,7 +155,10 @@ async function forgetSignerSession(session: SignerSession) {
       body: { session_id: session.session_id },
     })
   } catch (e: any) {
-    setStatus(e?.data ?? t('nostr_account.signer_forget_failed'), 'error')
+    setStatus(
+      e?.data?.error ?? e?.message ?? t('nostr_account.signer_forget_failed'),
+      'error',
+    )
   }
   refreshSaved()
   await loadSignerSessions()
@@ -163,17 +166,25 @@ async function forgetSignerSession(session: SignerSession) {
 
 async function load() {
   loading.value = true
-  const resp = await $fetch<{
-    username: string
-    allow_identity_linking: boolean
-    identities: Identity[]
-  }>(`${api()}/nostr/identities`, { credentials: 'include' })
-  username.value = resp.username
-  allowLinking.value = resp.allow_identity_linking
-  identities.value = resp.identities
-  refreshSaved()
-  await loadSignerSessions()
-  loading.value = false
+  try {
+    const resp = await $fetch<{
+      username: string
+      allow_identity_linking: boolean
+      identities: Identity[]
+    }>(`${api()}/nostr/identities`, { credentials: 'include' })
+    username.value = resp.username
+    allowLinking.value = resp.allow_identity_linking
+    identities.value = resp.identities
+    refreshSaved()
+    await loadSignerSessions()
+  } catch (e: any) {
+    setStatus(
+      e?.data?.error ?? e?.message ?? t('nostr_account.load_failed'),
+      'error',
+    )
+  } finally {
+    loading.value = false
+  }
 }
 
 async function linkWithSigner(signer: NostrSigner, signerType: string) {
@@ -435,7 +446,10 @@ async function rename(identity: Identity) {
     })
     await load()
   } catch (e: any) {
-    setStatus(e?.data ?? t('nostr_account.rename_failed'), 'error')
+    setStatus(
+      e?.data?.error ?? e?.message ?? t('nostr_account.rename_failed'),
+      'error',
+    )
   }
 }
 
@@ -449,7 +463,10 @@ async function revoke(identity: Identity) {
     })
     await load()
   } catch (e: any) {
-    setStatus(e?.data ?? t('nostr_account.revoke_failed'), 'error')
+    setStatus(
+      e?.data?.error ?? e?.message ?? t('nostr_account.revoke_failed'),
+      'error',
+    )
   }
 }
 
@@ -464,7 +481,10 @@ async function unlinkAll() {
     signerSessions.value = []
     await Promise.all([load()])
   } catch (e: any) {
-    setStatus(e?.data ?? t('nostr_account.unlink_failed'), 'error')
+    setStatus(
+      e?.data?.error ?? e?.message ?? t('nostr_account.unlink_failed'),
+      'error',
+    )
   }
 }
 
@@ -614,7 +634,7 @@ onMounted(async () => {
           <input
             id="nostr-account-label"
             v-model="identityLabel"
-            aria-label="Identity label"
+            :aria-label="t('nostr_account.identity_label_aria')"
             class="portal-account-input"
             :placeholder="t('nostr_account.label_placeholder')"
             autocomplete="off"
@@ -658,7 +678,7 @@ onMounted(async () => {
             <div class="flex flex-wrap gap-2">
               <input
                 v-model="bunkerInput"
-                aria-label="Remote signer address"
+                :aria-label="t('nostr.remote_signer_address')"
                 class="portal-account-input min-w-0 flex-1"
                 :placeholder="t('nostr_account.bunker_placeholder')"
                 autocomplete="off"
@@ -798,7 +818,7 @@ onMounted(async () => {
             <div v-if="!hasPasskey" class="mt-3 flex flex-wrap gap-2">
               <input
                 v-model="restoreNsec"
-                aria-label="Recovery key"
+                :aria-label="t('nostr_account.recovery_key_aria')"
                 class="portal-account-input min-w-0 flex-1"
                 :placeholder="t('nostr_account.recovery_restore_placeholder')"
                 autocomplete="off"
