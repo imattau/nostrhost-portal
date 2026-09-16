@@ -362,7 +362,8 @@ onMounted(async () => {
 
 <template>
   <section class="mx-auto max-w-3xl">
-    <PageTitle :title="t('my_site.title')" :description="t('my_site.intro')" />
+    <PageTitle :text="t('my_site.title')" class="mb-2" />
+    <p class="mb-6 text-sm text-portal-muted">{{ t('my_site.intro') }}</p>
 
     <BaseAlert
       v-if="status"
@@ -374,9 +375,7 @@ onMounted(async () => {
     />
 
     <!-- Signer connection -->
-    <section
-      class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-6"
-    >
+    <section class="mb-8 border-t border-portal-border py-6">
       <h2 class="mb-1 text-lg font-bold text-portal-foreground">
         {{ t('my_site.signer_section') }}
       </h2>
@@ -434,7 +433,7 @@ onMounted(async () => {
             id="my-site-bunker"
             v-model="bunkerInput"
             :aria-label="t('my_site.remote_signer')"
-            class="w-full rounded-[10px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+            class="w-full rounded-[3px] border border-portal-border bg-portal-input px-4 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-portal-focus focus:outline-none"
             placeholder="bunker:// or NIP-05 signer"
             autocomplete="off"
             :disabled="signerBusy"
@@ -452,7 +451,7 @@ onMounted(async () => {
     <!-- Your sites -->
     <section
       v-if="signerPubkey"
-      class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-6"
+      class="mb-8 border-t border-portal-border py-6"
     >
       <h2 class="mb-1 text-lg font-bold text-portal-foreground">
         {{ t('my_site.your_sites') }}
@@ -471,7 +470,7 @@ onMounted(async () => {
         <div
           v-for="(site, index) in sites"
           :key="index"
-          class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-portal-border px-3 py-2 text-sm"
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-portal-border py-3 text-sm last:border-b-0"
         >
           <span class="font-mono text-portal-foreground">
             {{ site.kind }}:{{ (site.pubkey as string).slice(0, 8) }}…:{{
@@ -491,7 +490,7 @@ onMounted(async () => {
     <!-- Publish -->
     <section
       v-if="signerPubkey"
-      class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-6"
+      class="mb-8 border-t border-portal-border py-6"
     >
       <h2 class="mb-1 text-lg font-bold text-portal-foreground">
         {{ t('my_site.publish_section') }}
@@ -516,7 +515,7 @@ onMounted(async () => {
             webkitdirectory
             directory
             multiple
-            class="block w-full cursor-pointer rounded-[10px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
+            class="block w-full cursor-pointer rounded-[3px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
             @change="onFilesChosen"
           />
           <p v-if="inventory" class="mt-2 text-xs text-portal-muted">
@@ -541,7 +540,7 @@ onMounted(async () => {
             <select
               id="my-site-kind"
               v-model="kind"
-              class="w-full rounded-[10px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
+              class="w-full rounded-[3px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
             >
               <option :value="String(KIND_ROOT)">
                 {{ t('my_site.root') }}
@@ -562,7 +561,7 @@ onMounted(async () => {
             <input
               id="my-site-d"
               v-model="dTag"
-              class="w-full rounded-[10px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
+              class="w-full rounded-[3px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
               :placeholder="t('my_site.d_placeholder')"
             />
           </div>
@@ -577,7 +576,7 @@ onMounted(async () => {
             <input
               id="my-site-servers"
               v-model="serversInput"
-              class="w-full rounded-[10px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
+              class="w-full rounded-[3px] border border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground"
               :placeholder="t('my_site.servers_placeholder')"
             />
           </div>
@@ -586,14 +585,13 @@ onMounted(async () => {
         <YButton
           icon="pencil"
           :text="t('my_site.build_plan')"
-          block
           :disabled="building || !inventory?.length"
           @click.prevent="buildPlan"
         />
 
         <div
           v-if="plan"
-          class="grid gap-1.5 rounded-md border border-portal-border px-3 py-2 text-xs"
+          class="grid gap-2 border-y border-l-4 border-portal-signature bg-portal-selection px-4 py-4 text-xs"
         >
           <div class="flex justify-between gap-3">
             <span class="text-portal-muted">{{ t('my_site.target') }}</span>
@@ -625,7 +623,6 @@ onMounted(async () => {
           v-if="plan"
           icon="thumb-up"
           :text="publishing ? t('my_site.publishing') : t('my_site.publish')"
-          block
           variant="success"
           :disabled="publishing"
           @click.prevent="publish"

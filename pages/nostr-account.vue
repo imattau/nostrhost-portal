@@ -554,7 +554,7 @@ onMounted(async () => {
         <div
           v-for="identity in identities"
           :key="identity.id"
-          class="rounded-2xl border border-portal-border bg-portal-surface p-5"
+          class="border-t border-portal-border py-4"
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -576,7 +576,7 @@ onMounted(async () => {
               />
               <YButton
                 icon="delete-forever"
-                variant="error"
+                variant="secondary"
                 :text="t('nostr_account.revoke')"
                 @click.prevent="revoke(identity)"
               />
@@ -598,14 +598,14 @@ onMounted(async () => {
 
       <section
         v-if="allowLinking"
-        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
+        class="mb-8 border-t-4 border-portal-signature py-6"
       >
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.link_section') }}
         </h2>
 
         <div
-          class="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-portal-border bg-portal-elevated p-3"
+          class="mb-6 flex flex-wrap items-center gap-4 border-y border-portal-border py-3"
         >
           <label
             for="link-mode-replace"
@@ -649,7 +649,7 @@ onMounted(async () => {
              then key material this device holds (generated or passkey). -->
         <div class="space-y-4">
           <div
-            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
+            class="border-t border-portal-border py-5 first:border-t-0 first:pt-0"
           >
             <h3 class="font-semibold">
               {{ t('nostr_account.method_extension_title') }}
@@ -666,9 +666,7 @@ onMounted(async () => {
             />
           </div>
 
-          <div
-            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
-          >
+          <div class="border-t border-portal-border py-5">
             <h3 class="font-semibold">
               {{ t('nostr_account.method_remote_title') }}
             </h3>
@@ -698,7 +696,7 @@ onMounted(async () => {
 
             <div
               v-if="qrOpen"
-              class="mt-3 flex flex-col items-center gap-2 rounded-xl border border-portal-border bg-portal-surface p-4"
+              class="mt-4 flex flex-col items-center gap-2 border-l-4 border-portal-signature bg-portal-selection p-4"
             >
               <img v-if="qrDataUrl" :src="qrDataUrl" class="h-52 w-52" alt="" />
               <p class="break-all text-xs opacity-60">{{ qrUri }}</p>
@@ -710,9 +708,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div
-            class="rounded-xl border border-portal-border bg-portal-elevated p-4"
-          >
+          <div class="border-t border-portal-border py-5">
             <h3 class="font-semibold">
               {{ t('nostr_account.method_key_title') }}
             </h3>
@@ -760,7 +756,7 @@ onMounted(async () => {
 
             <div
               v-if="recoveryNsec"
-              class="mt-3 space-y-2 rounded-xl border border-portal-border bg-portal-surface p-4"
+              class="mt-4 space-y-2 border-l-4 border-amber-600 bg-portal-elevated p-4"
             >
               <p class="break-all font-mono text-xs">{{ recoveryNsec }}</p>
               <YButton
@@ -772,7 +768,7 @@ onMounted(async () => {
 
             <div
               v-if="generated"
-              class="mt-3 rounded-xl border border-portal-border bg-portal-surface p-4"
+              class="mt-4 border-l-4 border-portal-signature bg-portal-selection p-4"
             >
               <p class="break-all font-mono text-sm">
                 {{ generated.npub }}
@@ -836,14 +832,14 @@ onMounted(async () => {
 
       <section
         v-else
-        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5 text-portal-muted"
+        class="mb-8 border-y border-portal-border py-5 text-portal-muted"
       >
         {{ t('nostr_account.linking_disabled') }}
       </section>
 
       <section
         v-if="signerSessions.length || savedSigners || hasLocalKey"
-        class="mb-6 rounded-2xl border border-portal-border bg-portal-surface p-5"
+        class="mb-8 border-t border-portal-border py-6"
       >
         <h2 class="mb-3 text-lg font-bold">
           {{ t('nostr_account.saved_signers') }}
@@ -932,6 +928,6 @@ onMounted(async () => {
 
 <style scoped>
 .portal-account-input {
-  @apply rounded-[10px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
+  @apply rounded-[3px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:border-portal-focus focus:outline-none;
 }
 </style>

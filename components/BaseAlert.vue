@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { cva } from 'class-variance-authority'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     message?: string
     variant?: 'info' | 'success' | 'warning' | 'error'
@@ -17,7 +17,7 @@ const props = withDefaults(
 )
 
 const alertVariants = cva(
-  'flex items-center gap-3 rounded-md border p-4 text-sm',
+  'flex items-start gap-3 border-y border-l-4 border-r-0 bg-transparent px-3 py-3 text-sm',
   {
     variants: {
       variant: {

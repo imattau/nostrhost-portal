@@ -25,29 +25,49 @@ useHead({
 <style>
 :root {
   color-scheme: light;
-  --portal-background: 248 247 251;
-  --portal-surface: 255 255 255;
-  --portal-elevated: 245 243 250;
-  --portal-input: 255 255 255;
-  --portal-border: 225 221 235;
-  --portal-foreground: 35 31 48;
-  --portal-muted: 104 98 119;
+  --portal-background: 242 239 231;
+  --portal-surface: 251 250 246;
+  --portal-elevated: 235 232 223;
+  --portal-input: 255 254 250;
+  --portal-border: 201 198 188;
+  --portal-foreground: 31 32 28;
+  --portal-muted: 91 91 83;
+  --portal-selection: 232 224 247;
+  --portal-signature: 103 70 144;
+  --portal-focus: 90 57 130;
 }
 
 .dark {
   color-scheme: dark;
-  --portal-background: 18 18 34;
-  --portal-surface: 22 22 43;
-  --portal-elevated: 30 30 55;
-  --portal-input: 9 9 15;
-  --portal-border: 42 42 71;
-  --portal-foreground: 241 245 249;
-  --portal-muted: 148 163 184;
+  --portal-background: 23 24 20;
+  --portal-surface: 29 31 26;
+  --portal-elevated: 37 39 33;
+  --portal-input: 19 20 17;
+  --portal-border: 66 68 59;
+  --portal-foreground: 239 237 228;
+  --portal-muted: 174 174 161;
+  --portal-selection: 54 44 65;
+  --portal-signature: 190 159 224;
+  --portal-focus: 210 180 242;
 }
 
 body {
   font-family: 'Geist', sans-serif;
   @apply bg-portal-background text-portal-foreground antialiased;
+}
+
+::selection {
+  background: rgb(var(--portal-selection));
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--portal-focus)) !important;
+  outline-offset: 3px !important;
+}
+
+code,
+.font-mono {
+  font-variant-ligatures: none;
 }
 
 #__nuxt {

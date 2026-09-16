@@ -46,15 +46,18 @@ async function onSearchSubmit() {
 const tileClasses = computed(() => {
   return {
     descriptive: {
-      container: 'md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
-      img: 'me-4',
-      title: 'text-xl leading-6 font-bold',
+      container: 'md:grid-cols-2',
+      tile: 'border-t border-portal-border py-4 sm:py-5',
+      img: 'me-4 size-14 min-w-14',
+      title: 'text-base leading-5 font-semibold',
     },
     simple: {
-      tile: 'flex-col text-center text-xl leading-6 font-bold items-center',
+      container: 'gap-px bg-portal-border border border-portal-border',
+      tile: 'flex-col text-center text-base leading-5 font-semibold items-center bg-portal-surface p-5 min-h-44',
+      img: 'size-20 min-w-20',
     },
     periodic: {
-      container: '',
+      container: 'gap-2',
       tile: 'flex-col p-3 items-center',
       title: 'leading-6 text-center text-base',
     },
@@ -64,43 +67,56 @@ const tileClasses = computed(() => {
 
 <template>
   <div>
-    <CustomText v-if="intro" :content="intro" />
+    <section id="apps" class="mb-10 mt-5 sm:mt-8">
+      <div
+        class="mb-5 flex flex-col gap-4 border-b border-portal-border pb-5 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div>
+          <PageTitle :text="t('app_list')" tag="h1" class="m-0" />
+          <CustomText
+            v-if="intro"
+            :content="intro"
+            class="mt-2 max-w-2xl text-sm text-portal-muted"
+          />
+        </div>
 
-    <form v-if="settings.search_engine" class="flex my-10" @submit.prevent>
-      <div class="mx-auto flex w-full max-w-xl">
-        <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
-        <label for="search" class="sr-only">
-          {{
-            t('search_engine_placeholder', {
-              engine: settings.search_engine_name,
-            })
-          }}
-        </label>
-        <input
-          id="search"
-          v-model="search"
-          type="search"
-          class="w-full rounded-l-[10px] border border-r-0 border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted focus:z-10 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          name="search"
-          :placeholder="
-            t('search_engine_placeholder', {
-              engine: settings.search_engine_name,
-            })
-          "
-        />
-        <button
-          type="submit"
-          class="flex shrink-0 items-center rounded-r-[10px] bg-brand-500 px-4 text-white transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-          @click="onSearchSubmit"
+        <form
+          v-if="settings.search_engine"
+          class="flex w-full sm:max-w-md"
+          role="search"
+          @submit.prevent="onSearchSubmit"
         >
-          <YIcon name="magnify" aria-hidden="true" class="m-0" />
-          <span class="sr-only">{{ t('search') }}</span>
-        </button>
+          <div class="flex w-full">
+            <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+            <label for="search" class="sr-only">
+              {{
+                t('search_engine_placeholder', {
+                  engine: settings.search_engine_name,
+                })
+              }}
+            </label>
+            <input
+              id="search"
+              v-model="search"
+              type="search"
+              class="min-h-11 w-full rounded-l-[3px] border border-r-0 border-portal-border bg-portal-input px-3 py-2 text-sm text-portal-foreground placeholder:text-portal-muted focus:z-10 focus:border-portal-focus focus:outline-none"
+              name="search"
+              :placeholder="
+                t('search_engine_placeholder', {
+                  engine: settings.search_engine_name,
+                })
+              "
+            />
+            <button
+              type="submit"
+              class="flex min-h-11 shrink-0 items-center rounded-r-[3px] bg-portal-foreground px-4 text-portal-background transition-opacity hover:opacity-80 focus:outline-none"
+            >
+              <YIcon name="magnify" aria-hidden="true" class="m-0" />
+              <span class="sr-only">{{ t('search') }}</span>
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
-
-    <section id="apps" class="my-10">
-      <PageTitle :text="t('app_list')" tag="h2" sr-only class="mb-4" />
 
       <div v-if="!apps.length">
         <em>{{ t('no_apps') }}</em>
@@ -108,28 +124,33 @@ const tileClasses = computed(() => {
       <ul
         v-else
         id="app-tiles"
-        class="theme-descriptive grid gap-4"
+        class="theme-descriptive grid"
         :class="[settings.portal_tile_theme, tileClasses.container]"
       >
         <li
           v-for="app in apps"
           :key="app.label"
-          class="app-tile text-align relative flex flex-auto flex-nowrap items-start justify-normal rounded-2xl border border-portal-border bg-portal-surface p-5 text-left font-normal text-portal-foreground shadow-sm transition-colors"
+          class="app-tile text-align relative flex flex-auto flex-nowrap items-start justify-normal text-left font-normal text-portal-foreground transition-colors"
           :class="tileClasses.tile"
           :style="`--label-hash: ${app.label_hash}`"
         >
-          <img
-            v-if="settings.portal_tile_theme !== 'periodic'"
-            aria-hidden
-            :src="
-              app.logo
-                ? app.logo
-                : 'data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
-            "
-            class="app-logo w-24 h-24 min-w-24 rounded-xl"
-            :class="tileClasses.img"
-            alt=""
-          />
+          <template v-if="settings.portal_tile_theme !== 'periodic'">
+            <img
+              v-if="app.logo"
+              aria-hidden
+              :src="app.logo"
+              class="app-logo"
+              :class="tileClasses.img"
+              alt=""
+            />
+            <span
+              v-else
+              class="app-logo grid place-items-center bg-portal-elevated font-mono text-sm font-semibold uppercase text-portal-signature"
+              :class="tileClasses.img"
+              aria-hidden="true"
+              >{{ app.initials }}</span
+            >
+          </template>
           <div>
             <h3
               :data-initials="app.initials"
@@ -142,7 +163,7 @@ const tileClasses = computed(() => {
               v-if="
                 app.description && settings.portal_tile_theme === 'descriptive'
               "
-              class="app-description mt-2"
+              class="app-description mt-1 text-sm leading-5 text-portal-muted"
               v-html="sanitizeHtml(app.description)"
             />
           </div>
@@ -163,7 +184,7 @@ const tileClasses = computed(() => {
 }
 
 #app-tiles .app-logo {
-  filter: drop-shadow(2px 2px 5px #222a);
+  object-fit: contain;
 }
 
 #app-tiles.simple {
@@ -178,22 +199,14 @@ const tileClasses = computed(() => {
 
 #app-tiles.simple .app-tile:hover,
 #app-tiles.descriptive .app-tile:hover {
-  border-color: theme('colors.brand.500');
-  background-color: rgb(var(--portal-elevated));
-  box-shadow: 0 8px 24px rgb(18 18 34 / 10%);
+  background-color: rgb(var(--portal-selection));
 }
 
 #app-tiles.periodic .app-tile {
   min-height: 180px;
-  border-radius: 0.3em !important;
-  --app-tile-colors: #f94144, #f3722c, #f8961e, #f9844a, #f9c74f, #90be6d,
-    #43aa8b, #4d908e, #577590, #277da1;
-  --app-tile-colors-n: 10;
-  color: white;
-  --i: mod(var(--label-hash), var(--app-tile-colors-n));
-  background: linear-gradient(var(--app-tile-colors)) no-repeat 0
-    calc(var(--i) * 100% / (var(--app-tile-colors-n) - 1)) / 100%
-    calc(1px * infinity);
+  border-radius: 3px;
+  border: 1px solid rgb(var(--portal-border));
+  background: rgb(var(--portal-surface));
 }
 #app-tiles.periodic .app-label:before {
   content: attr(data-initials);
@@ -202,6 +215,7 @@ const tileClasses = computed(() => {
   font-weight: 700;
   padding-top: 0.5em;
   padding-bottom: 0.3em;
+  color: rgb(var(--portal-signature));
 }
 
 @media (max-width: 620px) {

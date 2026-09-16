@@ -58,7 +58,7 @@ async function logout() {
 
 <template>
   <div
-    class="container mx-auto flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8"
+    class="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-5 pb-6 sm:px-8 lg:px-12"
   >
     <BaseAlert
       v-if="queryMsg"
@@ -78,9 +78,7 @@ async function logout() {
       assertive
     />
 
-    <header
-      class="mb-6 rounded-2xl border border-portal-border bg-portal-surface px-5 py-4 sm:px-6"
-    >
+    <header class="mb-5 border-b border-portal-border py-4 sm:mb-8 sm:py-5">
       <div id="focus-reset" class="h-10 -mt-10 focus-target" tabindex="-1">
         <a class="link sr-only focus:not-sr-only" href="#main-target">
           {{ $t('skip_link.main_content') }}
@@ -95,25 +93,25 @@ async function logout() {
       </div>
 
       <slot name="header">
-        <div class="flex flex-row items-center gap-4">
+        <div class="flex min-h-12 flex-row items-center gap-4">
           <NuxtLink
             to="/"
             class="flex min-w-0 items-center gap-3 text-portal-foreground no-underline"
           >
             <span class="sr-only">{{ t('back_to_apps') }}</span>
             <span
-              class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-500"
+              class="grid size-8 shrink-0 place-items-center bg-portal-foreground font-mono text-[10px] font-bold tracking-tight text-portal-background"
+              aria-hidden="true"
+              >NH</span
             >
-              <YIcon name="shield-check" size="1.25rem" aria-hidden="true" />
+            <span>
+              <span class="block truncate text-base font-bold tracking-tight">{{
+                portalTitle
+              }}</span>
             </span>
-            <span class="truncate text-base font-bold tracking-tight">{{
-              portalTitle
-            }}</span>
           </NuxtLink>
 
-          <div
-            class="flex flex-grow flex-wrap items-center justify-end gap-3 max-[500px]:flex-col max-[500px]:items-end"
-          >
+          <div class="flex flex-grow items-center justify-end gap-4">
             <div v-if="user" class="flex-grow">
               <div class="profile flex flex-col items-end">
                 <span class="flex items-center gap-2">
@@ -121,12 +119,8 @@ async function logout() {
                     {{ user.fullname || user.username }}
                   </span>
 
-                  <NuxtLink
-                    to="/edit"
-                    class="link"
-                    :aria-label="t('footerlink_edit')"
-                  >
-                    <YIcon name="pencil" size="1em" />
+                  <NuxtLink to="/edit" class="link text-xs">
+                    {{ t('footerlink_edit') }}
                   </NuxtLink>
                 </span>
                 <span class="mt-1 text-xs text-portal-muted">{{
@@ -138,30 +132,30 @@ async function logout() {
             <div>
               <YButton
                 v-if="isLoggedIn"
-                icon="logout"
                 :text="t('logout')"
+                variant="secondary"
                 @click.prevent="logout"
               />
-              <YButton v-else icon="login" :text="t('login')" to="/login" />
+              <YButton v-else :text="t('login')" to="/login" />
             </div>
           </div>
         </div>
       </slot>
     </header>
 
-    <main>
+    <main class="flex-1">
       <slot />
     </main>
 
     <footer
       v-if="isLoggedIn"
       id="main-footer"
-      class="mt-auto focus-target border-t border-portal-border pt-4"
+      class="focus-target mt-10 border-t border-portal-border py-5"
       tabindex="-1"
     >
       <slot name="footer">
         <nav
-          class="flex flex-col flex-wrap gap-4 text-center sm:flex-row sm:text-left"
+          class="flex flex-col flex-wrap gap-x-6 gap-y-3 text-sm sm:flex-row"
         >
           <NuxtLink
             v-for="link in footerLinks"

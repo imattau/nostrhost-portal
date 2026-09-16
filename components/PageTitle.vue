@@ -18,7 +18,7 @@ withDefaults(
     :is="tag"
     id="main-target"
     tabindex="-1"
-    class="inline-block text-4xl font-bold"
+    class="block text-2xl font-bold tracking-tight sm:text-3xl"
     :class="{ 'sr-only focus:not-sr-only': srOnly }"
   >
     <slot name="default">
@@ -26,11 +26,3 @@ withDefaults(
     </slot>
   </component>
 </template>
-
-<style scoped>
-#main-target {
-  /* Need some override here because of `not-sr-only` styles */
-  margin-top: 2rem !important;
-  margin-bottom: 0.75rem !important;
-}
-</style>

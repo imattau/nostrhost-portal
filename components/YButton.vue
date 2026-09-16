@@ -26,13 +26,13 @@ withDefaults(
 )
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-3 text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-portal-surface',
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-4 py-2.5 text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none',
   {
     variants: {
       variant: {
-        primary: 'bg-brand-500 text-white hover:bg-brand-600',
+        primary: 'bg-portal-foreground text-portal-background hover:opacity-85',
         secondary:
-          'border border-portal-border bg-portal-elevated text-portal-foreground hover:border-brand-500 hover:text-brand-500',
+          'border border-portal-border bg-transparent text-portal-foreground hover:bg-portal-elevated',
         success: 'bg-green-600 text-white hover:bg-green-700',
         info: 'bg-sky-600 text-white hover:bg-sky-700',
         error: 'bg-red-600 text-white hover:bg-red-700',

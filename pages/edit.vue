@@ -50,14 +50,12 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
       {{ t('edit_intro') }}
     </p>
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <div class="space-y-6">
-        <section
-          class="rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
-        >
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div>
+        <section class="border-t border-portal-border py-6">
           <div class="mb-4 flex items-center gap-4">
             <div
-              class="grid size-14 shrink-0 place-items-center rounded-full border-2 border-brand-500 bg-brand-500/10 text-lg font-bold text-brand-500"
+              class="grid size-12 shrink-0 place-items-center border border-portal-signature bg-portal-selection font-mono text-sm font-bold text-portal-signature"
             >
               {{ userInitials }}
             </div>
@@ -70,13 +68,10 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
               </p>
             </div>
           </div>
-          <div class="mb-4 h-px bg-portal-border" />
           <UserInfoForm />
         </section>
 
-        <section
-          class="rounded-2xl border border-portal-border bg-portal-surface p-5 sm:p-6"
-        >
+        <section class="border-t border-portal-border py-6">
           <h2 class="text-lg font-bold">{{ t('edit_browser_settings') }}</h2>
           <p class="mb-4 mt-1 text-sm text-portal-muted">
             These preferences are stored in this browser.
@@ -120,15 +115,8 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
         </section>
       </div>
 
-      <aside class="space-y-6">
-        <section
-          class="rounded-2xl border border-portal-border bg-portal-surface p-6"
-        >
-          <div
-            class="mb-4 grid size-10 place-items-center rounded-lg bg-brand-500/10 text-brand-500"
-          >
-            <YIcon name="key-chain" size="1.25rem" aria-hidden="true" />
-          </div>
+      <aside>
+        <section class="border-t-4 border-portal-signature py-5">
           <h2 class="text-base font-bold">{{ t('nostr_account.title') }}</h2>
           <p class="mt-2 text-sm leading-6 text-portal-muted">
             {{ t('edit_nostr_identity_desc') }}
@@ -137,7 +125,6 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
             class="mt-5"
             :text="t('edit_manage_nostr_identities')"
             variant="secondary"
-            block
             to="/nostr-account"
           />
         </section>
@@ -148,6 +135,6 @@ const themesAsOptions = ['auto', 'light', 'dark'].map((theme) => ({
 
 <style scoped>
 .portal-select {
-  @apply rounded-[10px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
+  @apply rounded-[3px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground focus:border-portal-focus focus:outline-none;
 }
 </style>

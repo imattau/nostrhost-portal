@@ -39,8 +39,8 @@ const validationListeners = {
     :aria-describedby="describedBy"
     :class="
       cn(
-        'w-full rounded-[10px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted',
-        'focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500',
+        'w-full rounded-[3px] border border-portal-border bg-portal-input px-3 py-3 text-sm text-portal-foreground placeholder:text-portal-muted',
+        'focus:border-portal-focus focus:outline-none',
         invalid && 'border-red-500 focus:ring-red-500 focus:border-red-500',
       )
     "
