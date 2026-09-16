@@ -19,8 +19,8 @@ const footerLinks = computed(() => {
     newWindow?: boolean
     external?: boolean
   }[] = [
-    { text: t('footerlink_edit'), to: '/edit' },
-    { text: t('footerlink_nostr_identity'), to: '/nostr-account' },
+    { text: t('footerlink_edit'), to: '/account/profile' },
+    { text: t('footerlink_nostr_identity'), to: '/account/identity' },
     { text: t('footerlink_my_site'), to: '/my-site' },
   ]
   // The admin console is same-origin and only meaningful for admins; the
@@ -119,7 +119,7 @@ async function logout() {
                     {{ user.fullname || user.username }}
                   </span>
 
-                  <NuxtLink to="/edit" class="link text-xs">
+                  <NuxtLink to="/account/profile" class="link text-xs">
                     {{ t('footerlink_edit') }}
                   </NuxtLink>
                 </span>

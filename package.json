@@ -6,6 +6,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test:branding": "node scripts/check-branding.mjs",
     "lint:js": "eslint --ext \".ts,.vue,.cjs,.js\" --ignore-path .gitignore .",
     "lint:prettier": "prettier --check .",
     "lint": "yarn lint:js && yarn lint:prettier",

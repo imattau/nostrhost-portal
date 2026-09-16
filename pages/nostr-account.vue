@@ -18,6 +18,10 @@ import {
 } from '@/composables/nostrSigner'
 import { useAsyncAction, useStatus } from '@/composables/asyncAction'
 
+if (useRoute().path === '/nostr-account') {
+  await navigateTo('/account/identity', { replace: true })
+}
+
 definePageMeta({
   public: false,
 })
@@ -841,9 +845,7 @@ onMounted(async () => {
         v-if="signerSessions.length || savedSigners || hasLocalKey"
         class="mb-8 border-t border-portal-border py-6"
       >
-        <h2 class="mb-3 text-lg font-bold">
-          {{ t('nostr_account.saved_signers') }}
-        </h2>
+        <h2 class="mb-3 text-lg font-bold">Signers saved in this browser</h2>
 
         <template v-if="signerSessions.length">
           <h3 class="text-sm font-semibold">

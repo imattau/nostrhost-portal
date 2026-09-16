@@ -15,7 +15,16 @@ export function sanitizeHtml(dirty: string): string {
     // Keep the tags the portal's own styles expect (links, emphasis,
     // headings, lists, blockquotes, images/video) while forbidding active
     // content by default.
-    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'svg', 'math'],
+    FORBID_TAGS: [
+      'script',
+      'style',
+      'iframe',
+      'object',
+      'embed',
+      'form',
+      'svg',
+      'math',
+    ],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'style'],
   })
 }

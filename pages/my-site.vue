@@ -63,7 +63,6 @@ interface NsitePlan {
 
 const KIND_ROOT = 15128
 const KIND_NAMED = 35128
-const DEFAULT_SERVERS = 'https://blossom.primal.net, https://blossom.band'
 
 const signer = ref<NostrSigner | null>(null)
 const signerPubkey = ref('')
@@ -83,7 +82,8 @@ const inventoryError = ref('')
 
 const kind = ref(String(KIND_ROOT))
 const dTag = ref('')
-const serversInput = ref(DEFAULT_SERVERS)
+const useCustomNetwork = ref(false)
+const serversInput = ref('')
 
 const plan = ref<NsitePlan | null>(null)
 const uploadProgress = ref('')
@@ -255,7 +255,7 @@ async function buildPlan() {
             kind: Number(kind.value),
             d: kind.value === String(KIND_NAMED) ? dTag.value.trim() : '',
             items,
-            servers: servers.value,
+            servers: useCustomNetwork.value ? servers.value : [],
           },
         },
       )
@@ -566,6 +566,25 @@ onMounted(async () => {
             />
           </div>
           <div :class="kind === String(KIND_NAMED) ? '' : 'sm:col-span-2'">
+            <p class="mb-1 text-sm font-medium text-portal-foreground">
+              Network settings
+            </p>
+            <p v-if="!useCustomNetwork" class="m-0 text-sm text-portal-muted">
+              Using the server-managed relay and file-storage defaults.
+            </p>
+            <button
+              type="button"
+              class="link mt-1 border-0 bg-transparent p-0 text-sm"
+              @click="useCustomNetwork = !useCustomNetwork"
+            >
+              {{
+                useCustomNetwork
+                  ? 'Use server defaults'
+                  : 'Use different network settings'
+              }}
+            </button>
+          </div>
+          <div v-if="useCustomNetwork" class="sm:col-span-3">
             <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
             <label
               for="my-site-servers"

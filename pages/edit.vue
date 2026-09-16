@@ -1,4 +1,8 @@
 <script setup lang="ts">
+if (useRoute().path === '/edit') {
+  await navigateTo('/account/profile', { replace: true })
+}
+
 const { t, locales, getBrowserLocale } = useI18n()
 
 useHead({
