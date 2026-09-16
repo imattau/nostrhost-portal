@@ -7,8 +7,6 @@
     "add_forward": "Adjon hozzá egy e-mail továbbító címet",
     "add_mail": "Adjon hozzá egy e-mail álnevet",
     "cancel": "Megszünteti",
-    "change_password": "Jelszó módosítása",
-    "current_password": "Jelenlegi jelszó",
     "footerlink_administration": "Adminisztráció",
     "footerlink_documentation": "Dokumentáció",
     "footerlink_edit": "Profilom szerkesztése",
@@ -22,7 +20,6 @@
     "mail_forward": "E-mail továbbítási cím",
     "new_forward": "newforward{'@'}myforeigndomain.org",
     "new_mail": "newmail{'@'}mydomain.org",
-    "new_password": "Új jelszó",
     "password": "Jelszó",
     "username": "Felhasználónév"
 }

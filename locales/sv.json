@@ -7,8 +7,6 @@
     "add_forward": "Lägg till en e-postadress för vidarebefordran",
     "add_mail": "Lägg till ett e-postalias",
     "cancel": "Avbryt",
-    "change_password": "Byt lösenord",
-    "current_password": "Nuvarande lösenord",
     "footerlink_administration": "Administration",
     "footerlink_documentation": "Dokumentation",
     "footerlink_edit": "Redigera min profil",
@@ -22,7 +20,6 @@
     "mail_forward": "E-postadress för vidarebefordring",
     "new_forward": "ny_vidarebefordring{'@'}min_fjarr-doman.org",
     "new_mail": "ny_adress{'@'}min_doman.org",
-    "new_password": "Nytt lösenord",
     "password": "Lösenord",
     "username": "Användarnamn"
 }

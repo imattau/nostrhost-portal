@@ -7,8 +7,6 @@
     "add_forward": "Додайте адресу переадресації е-пошти",
     "add_mail": "Додайте аліас е-пошти",
     "cancel": "Скасувати",
-    "change_password": "Змінити пароль",
-    "current_password": "Поточний пароль",
     "footerlink_administration": "Адміністрування",
     "footerlink_documentation": "Документація",
     "footerlink_edit": "Редагувати мій профіль",
@@ -22,7 +20,6 @@
     "mail_forward": "Адреса переадресації е-пошти",
     "new_forward": "novapereadresaciya{'@'}myforeigndomain.org",
     "new_mail": "novaeposhta{'@'}mydomain.org",
-    "new_password": "Новий пароль",
     "password": "Пароль",
     "username": "Ім'я користувача"
 }

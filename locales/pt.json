@@ -7,8 +7,6 @@
     "add_forward": "Adicionar um endereço de encaminhamento de email",
     "add_mail": "Adicionar um alias de email",
     "cancel": "Cancelar",
-    "change_password": "Alterar senha",
-    "current_password": "Senha atual",
     "footerlink_administration": "Administração",
     "footerlink_documentation": "Documentação",
     "footerlink_edit": "Editar o meu perfil",
@@ -22,7 +20,6 @@
     "mail_forward": "Endereço de encaminhamento de email",
     "new_forward": "novoreenvio{'@'}dominioexterno.org",
     "new_mail": "novomail{'@'}meudominio.org",
-    "new_password": "Nova senha",
     "password": "Senha",
     "username": "Nome de utilizador"
 }

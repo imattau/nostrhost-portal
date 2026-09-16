@@ -7,8 +7,6 @@
     "add_forward": "एक ई-मेल अग्रेषण पता जोड़ें",
     "add_mail": "एक ईमेल उपनाम जोड़ें",
     "cancel": "रद्द करना",
-    "change_password": "पासवर्ड बदलें",
-    "current_password": "वर्तमान पासवर्ड",
     "footerlink_administration": "प्रशासन",
     "footerlink_documentation": "प्रलेखन",
     "footerlink_edit": "मेरे प्रोफ़ाइल संपादित करे",
@@ -22,7 +20,6 @@
     "mail_forward": "ई-मेल अग्रेषण पता",
     "new_forward": "newforward{'@'}myforeigndomain.org",
     "new_mail": "newmail{'@'}mydomain.org",
-    "new_password": "नया पासवर्ड",
     "password": "पासवर्ड",
     "username": "उपयोगकर्ता नाम"
 }
