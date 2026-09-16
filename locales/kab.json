@@ -5,8 +5,6 @@
         "name": "Taqbaylit"
     },
     "cancel": "Sefsex",
-    "change_password": "Beddel awal n uffir",
-    "current_password": "Awal n uɛeddi amiran",
     "footerlink_administration": "Tadbelt",
     "footerlink_documentation": "Tasemlit",
     "footerlink_support": "Tallalt",
@@ -14,7 +12,6 @@
     "logged_out": "Tessensreḍ tuqqna",
     "login": "Qqen",
     "logout": "Senser",
-    "new_password": "Awal uffir amaynut",
     "password": "Awal n uɛeddi",
     "username": "Isem n useqdac",
     "save": "Ḥrez"

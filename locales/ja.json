@@ -7,8 +7,6 @@
     "add_forward": "電子メール転送アドレスを追加",
     "add_mail": "電子メール エイリアスを追加",
     "cancel": "キャンセル",
-    "change_password": "パスワード変更",
-    "current_password": "現在のパスワード",
     "footerlink_administration": "管理",
     "footerlink_documentation": "ドキュメント",
     "footerlink_edit": "プロフィールを編集する",
@@ -22,7 +20,6 @@
     "mail_forward": "電子メール転送アドレス",
     "new_forward": "newforward{'@'}myforeigndomain.org",
     "new_mail": "newmail{'@'}mydomain.org",
-    "new_password": "新しいパスワード",
     "password": "パスワード",
     "username": "ユーザー名"
 }

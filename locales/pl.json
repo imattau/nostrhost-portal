@@ -8,8 +8,6 @@
     "add_forward": "Dodaj adres e-mail do przekazywania",
     "add_mail": "Dodaj alias e-mail",
     "cancel": "Anuluj",
-    "change_password": "Zmień hasło",
-    "current_password": "Aktualne hasło",
     "footerlink_administration": "Panel administracyjny",
     "footerlink_documentation": "Dokumentacja",
     "footerlink_edit": "Edytuj mój profil",
@@ -23,11 +21,9 @@
     "mail_forward": "Adres do przekazywania wiadomości e-mail",
     "new_forward": "noweprzekierowanie{'@'}najakasdomene.org",
     "new_mail": "nowymail{'@'}domena.org",
-    "new_password": "Nowe hasło",
     "password": "Hasło",
     "username": "Nazwa użytkownika",
     "language": "Język",
-    "password_changed_reconnect": "Hasło zostało zmienione, proszę połącz się ponownie.",
     "save": "Zapisz",
     "ssowat": {
         "protected": "Proszę zaloguj się, aby uzyskać dostęp do tego adresu.",
@@ -44,7 +40,6 @@
         "password_not_match": "Hasła do siebie nie pasują.",
         "string_too_short": "Nieprawidłowa wartość: potrzeba co najmniej {min} znaków"
     },
-    "confirm_new_password": "Potwierdź nowe hasło",
     "api": {
         "processing": "Przetwarzanie…"
     },

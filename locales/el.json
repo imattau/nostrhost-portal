@@ -7,8 +7,6 @@
     "add_forward": "Προσθέστε μια διεύθυνση προώθησης email",
     "add_mail": "Προσθέστε ένα ψευδώνυμο email",
     "cancel": "Ματαίωση",
-    "change_password": "Αλλαξε κωδικό",
-    "current_password": "Τρέχων κωδικός πρόσβασης",
     "footerlink_administration": "Διαχείριση",
     "footerlink_documentation": "Τεκμηρίωση",
     "footerlink_edit": "Επεξεργασία του προφίλ μου",
@@ -22,7 +20,6 @@
     "mail_forward": "Διεύθυνση προώθησης ηλεκτρονικού ταχυδρομείου",
     "new_forward": "νέοπροςταεμπρός{'@'}οξένοςτομέαςμου.org",
     "new_mail": "νέοταχυδρομείο{'@'}οτομέαςμου.org",
-    "new_password": "Νέος Κωδικός",
     "password": "Κωδικός πρόσβασης",
     "username": "Όνομα χρήστη"
 }

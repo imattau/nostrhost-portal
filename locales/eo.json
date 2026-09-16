@@ -7,8 +7,6 @@
     "add_forward": "Aldonu poŝton antaŭen",
     "add_mail": "Aldonu poŝton alias",
     "cancel": "Nuligi",
-    "change_password": "Ŝanĝi pasvorton",
-    "current_password": "Nuna pasvorto",
     "footerlink_administration": "Administrado",
     "footerlink_documentation": "Dokumentado",
     "footerlink_edit": "Redakti mian profilon",
@@ -22,7 +20,6 @@
     "mail_forward": "Poŝti antaŭen",
     "new_forward": "newforward{'@'}myforeigndomain.org",
     "new_mail": "nova-adreso{'@'}mia-domajno.org",
-    "new_password": "Nova pasvorto",
     "password": "Pasvorto",
     "username": "Uzantnomo"
 }

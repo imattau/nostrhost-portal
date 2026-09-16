@@ -7,8 +7,6 @@
     "add_forward": "Lisää sähköpostin välitysosoite",
     "add_mail": "Lisää sähköposti-alias",
     "cancel": "Peruuta",
-    "change_password": "Vaihda salasana",
-    "current_password": "Nykyinen salasana",
     "footerlink_administration": "Ylläpito",
     "footerlink_documentation": "Dokumentaatio",
     "footerlink_edit": "Muokkaa profiiliani",
@@ -22,7 +20,6 @@
     "mail_forward": "Sähköpostin välitysosoite",
     "new_forward": "uusivälitys{'@'}minunulkopuolinendomain.fi",
     "new_mail": "uusiosoite{'@'}minundomain.fi",
-    "new_password": "Uusi salasana",
     "password": "Salasana",
     "username": "Käyttäjänimi"
 }
