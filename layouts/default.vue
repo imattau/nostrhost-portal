@@ -39,7 +39,10 @@ const footerLinks = computed(() => {
   return links
 })
 
+const logoutError = ref(false)
+
 async function logout() {
+  logoutError.value = false
   const { error } = await useApi('/logout')
 
   if (!error.value) {
@@ -48,7 +51,7 @@ async function logout() {
     isLoggedIn.value = false
     await navigateTo(settings.value.public ? '/' : '/login')
   } else {
-    // FIXME : display an error or something
+    logoutError.value = true
   }
 }
 </script>
@@ -62,6 +65,15 @@ async function logout() {
       variant="warning"
       icon="alert-outline"
       :message="t('ssowat.' + queryMsg)"
+      class="mb-4"
+      assertive
+    />
+
+    <BaseAlert
+      v-if="logoutError"
+      variant="error"
+      icon="alert-outline"
+      :message="t('logout_failed')"
       class="mb-4"
       assertive
     />
