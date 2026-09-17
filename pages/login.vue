@@ -59,7 +59,18 @@ async function signInWithSigner(signer: NostrSigner) {
   // forward_auth as the app's own URL (same host as the portal), so a
   // cross-origin value is attacker-supplied and must not be honoured —
   // otherwise the login page is an open redirect / phishing vector.
-  await navigateTo(safeRedirectTarget() ?? '/')
+  const target = safeRedirectTarget()
+  // `r` points at the requesting app (the admin console or a forward_auth'd
+  // app), never at a portal-internal route. The portal Nuxt app is mounted
+  // under baseURL (/nostrhost/sso), so an in-app navigateTo of an
+  // app-relative path like /nostrhost/admin/ would be double-prefixed into
+  // /nostrhost/sso/nostrhost/admin/ and land on the portal 404 instead of
+  // the console. Cross-app targets must be a full-page load instead.
+  if (target && !target.startsWith(useRuntimeConfig().app.baseURL)) {
+    await navigateTo(target, { external: true })
+  } else {
+    await navigateTo(target ?? '/')
+  }
 }
 
 function safeRedirectTarget(): string | null {
