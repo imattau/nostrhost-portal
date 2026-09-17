@@ -89,6 +89,7 @@ type AppsSettings = Record<
 
 export interface Settings {
   domain: string
+  admin_url: string
   public: boolean
   portal_logo?: { is: 'img' | 'svg'; src: string }
   portal_theme: string

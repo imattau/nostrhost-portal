@@ -23,8 +23,11 @@ const footerLinks = computed(() => {
     { text: t('footerlink_nostr_identity'), to: '/account/identity' },
     { text: t('footerlink_my_site'), to: '/my-site' },
   ]
-  // The admin console is same-origin and only meaningful for admins; the
-  // console itself refuses non-admins, so gate the link on the account flag.
+  // The admin console is only meaningful for admins; the console itself
+  // refuses non-admins, so gate the link on the account flag. Use the
+  // canonical URL supplied by the server: portals exist on every registered
+  // domain, while the privileged /package/* API intentionally exists only on
+  // the primary domain.
   // It must be rendered as an external link: with the Nuxt app baseURL set to
   // /nostrhost/sso, an app-relative to="/nostrhost/admin/" would be
   // double-prefixed into /nostrhost/sso/nostrhost/admin/ and land on the
@@ -32,7 +35,7 @@ const footerLinks = computed(() => {
   if (user.value?.admin) {
     links.push({
       text: t('footerlink_administration'),
-      to: '/nostrhost/admin/',
+      to: settings.value.admin_url,
       external: true,
     })
   }
