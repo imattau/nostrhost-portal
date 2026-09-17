@@ -97,6 +97,12 @@ const signerLabel = (type: string) =>
     passkey: t('nostr_account.signer_passkey'),
   })[type] || t('nostr_account.signer_unknown')
 
+function actionError(e: any, fallback: string): string {
+  const data = e?.data
+  if (typeof data === 'string') return data
+  return data?.error ?? data?.message ?? e?.message ?? fallback
+}
+
 function refreshSaved() {
   const ui = (window as NostrWindow).NostrConnectUI
   savedSigners.value = ui?.getSavedInfo() ?? null
@@ -253,8 +259,10 @@ async function linkWithBunker() {
       const signer = await ui.connectViaBunkerUri(
         bunkerInput.value.trim(),
         label,
+        true,
       )
       await linkWithSigner(signer, 'nip46')
+      ui.persistConnectedSigner(signer)
       refreshSaved()
       await registerSignerSession(signer, label)
     },
@@ -263,7 +271,7 @@ async function linkWithBunker() {
         status.value = null
       },
       onError: (e) =>
-        setStatus(e?.message ?? t('nostr_account.link_failed'), 'error'),
+        setStatus(actionError(e, t('nostr_account.link_failed')), 'error'),
     },
   )
 }
@@ -287,9 +295,11 @@ async function linkWithQr() {
         },
         qrAbort!.signal,
         label,
+        true,
       )
       qrOpen.value = false
       await linkWithSigner(signer, 'nip46')
+      ui.persistConnectedSigner(signer)
       refreshSaved()
       await registerSignerSession(signer, label)
     },
@@ -299,7 +309,7 @@ async function linkWithQr() {
       },
       onError: (e) => {
         if (!qrAbort?.signal.aborted) {
-          setStatus(e?.message ?? t('nostr_account.qr_timeout'), 'error')
+          setStatus(actionError(e, t('nostr_account.qr_timeout')), 'error')
         }
       },
       onFinally: () => {

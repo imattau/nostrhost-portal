@@ -29,6 +29,10 @@ window.NostrConnectUI = (function () {
   // this: the relay is already in the pasted URI.
   var DEFAULT_QR_RELAYS = ["wss://relay.nsec.app", "wss://relay.damus.io"];
   var CONNECT_TIMEOUT_MS = 120000;
+  // Account linking is a two-phase operation: connect to the signer, then
+  // have it sign the server challenge. Keep not-yet-linked connections out
+  // of localStorage so a rejected/failed signature cannot look successful.
+  var pendingBunkers = new WeakMap();
 
   function bytesToHex(bytes) {
     var hex = "";
@@ -192,7 +196,20 @@ window.NostrConnectUI = (function () {
       });
   }
 
-  async function connectViaBunkerUri(bunkerUriOrNip05, label) {
+  function persistConnectedSigner(signer) {
+    var pending = pendingBunkers.get(signer);
+    if (!pending) return signer;
+    var entry = saveBunker(
+      pending.clientSecretKey,
+      pending.bunkerPointer,
+      pending.label
+    );
+    pendingBunkers.delete(signer);
+    signer.sessionId = entry.sessionId;
+    return signer;
+  }
+
+  async function connectViaBunkerUri(bunkerUriOrNip05, label, deferSave) {
     var vendor = window.NostrConnectVendor;
     var bp = await vendor.parseBunkerInput(bunkerUriOrNip05);
     if (!bp) {
@@ -201,12 +218,20 @@ window.NostrConnectUI = (function () {
     var clientSecretKey = vendor.generateSecretKey();
     var signer = vendor.BunkerSigner.fromBunker(clientSecretKey, bp);
     await signer.connect();
+    if (deferSave) {
+      pendingBunkers.set(signer, {
+        clientSecretKey: clientSecretKey,
+        bunkerPointer: bp,
+        label: label || null,
+      });
+      return signer;
+    }
     var entry = saveBunker(clientSecretKey, bp, label);
     signer.sessionId = entry.sessionId;
     return signer;
   }
 
-  async function connectViaQr(onUriReady, abortSignal, label) {
+  async function connectViaQr(onUriReady, abortSignal, label, deferSave) {
     var vendor = window.NostrConnectVendor;
     var clientSecretKey = vendor.generateSecretKey();
     var clientPubkey = vendor.getPublicKey(clientSecretKey);
@@ -229,6 +254,14 @@ window.NostrConnectUI = (function () {
       {},
       abortSignal || CONNECT_TIMEOUT_MS
     );
+    if (deferSave) {
+      pendingBunkers.set(signer, {
+        clientSecretKey: clientSecretKey,
+        bunkerPointer: signer.bp,
+        label: label || null,
+      });
+      return signer;
+    }
     var entry = saveBunker(clientSecretKey, signer.bp, label);
     signer.sessionId = entry.sessionId;
     return signer;
@@ -342,6 +375,7 @@ window.NostrConnectUI = (function () {
     reconnectSaved: reconnectSaved,
     reconnectSession: reconnectSession,
     forgetSession: forgetSession,
+    persistConnectedSigner: persistConnectedSigner,
     connectViaBunkerUri: connectViaBunkerUri,
     connectViaQr: connectViaQr,
     clearSaved: clearSaved,

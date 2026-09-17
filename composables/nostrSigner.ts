@@ -24,14 +24,21 @@ export type NostrConnectUI = {
   }>
   reconnectSaved(): Promise<NostrSigner | null>
   forgetSession(sessionId: string): void
+  persistConnectedSigner<T extends NostrSigner>(
+    signer: T,
+  ): T & {
+    sessionId?: string
+  }
   connectViaBunkerUri(
     value: string,
     label?: string | null,
+    deferSave?: boolean,
   ): Promise<NostrSigner & { sessionId?: string }>
   connectViaQr(
     onUriReady: (uri: string, dataUrl: string) => void,
     signal: AbortSignal,
     label?: string | null,
+    deferSave?: boolean,
   ): Promise<NostrSigner & { sessionId?: string }>
   clearSaved(): void
   clearLocalKey(): void
